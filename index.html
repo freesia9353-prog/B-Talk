@@ -97,13 +97,150 @@
 
         button { width: 100%; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; border: none; transition: all 0.2s ease; }
         
-        #auth-section { width: 100%; display: flex; gap: 10px; margin-bottom: 25px; }
-        #google-login-btn { background-color: #ffffff; color: #111111; margin: 0; }
-        #google-login-btn:hover { background-color: #e5e5e5; transform: translateY(-1px); }
-        #anon-login-btn { background-color: #242933; color: #ffffff; border: 1px solid rgba(255,255,255,0.1); margin: 0; }
-        #anon-login-btn:hover { background-color: #2f3644; transform: translateY(-1px); }
-        #logout-btn { background-color: transparent; color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 10px; font-size: 13px; display: none; }
-        #logout-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+        /* ── 인증 섹션 ── */
+        #auth-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 25px;
+        }
+
+        /* 버튼 3개 그룹 */
+        .auth-btn-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #google-login-btn {
+            background-color: #ffffff;
+            color: #111111;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        #google-login-btn:hover { background-color: #e8e8e8; transform: translateY(-1px); }
+
+        #email-login-btn-main {
+            background-color: #242933;
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.12);
+            margin: 0;
+            font-size: 14px;
+        }
+        #email-login-btn-main:hover { background-color: #2f3644; transform: translateY(-1px); }
+
+        #email-signup-btn-main {
+            background-color: transparent;
+            color: var(--accent-color);
+            border: 1px solid rgba(0,229,255,0.35);
+            margin: 0;
+            font-size: 14px;
+        }
+        #email-signup-btn-main:hover { background-color: rgba(0,229,255,0.06); transform: translateY(-1px); }
+
+        /* 인라인 폼 패널 */
+        .auth-form-panel {
+            width: 100%;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+            margin-top: 0;
+        }
+        .auth-form-panel.open {
+            max-height: 320px;
+            opacity: 1;
+            margin-top: 14px;
+        }
+
+        .auth-form-inner {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-form-inner .form-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 2px;
+        }
+
+        .auth-form-inner input {
+            margin-bottom: 0;
+        }
+
+        .auth-form-inner .form-hint {
+            font-size: 11.5px;
+            color: rgba(255,255,255,0.3);
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .auth-submit-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            margin: 0;
+        }
+        .auth-submit-btn.primary {
+            background-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+        .auth-submit-btn.primary:hover { background-color: #00cce0; transform: translateY(-1px); }
+        .auth-submit-btn.primary:disabled {
+            background-color: rgba(0,229,255,0.2);
+            color: rgba(255,255,255,0.3);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 이메일 인증 스텝 표시 */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.5px;
+        }
+        .step-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            transition: background 0.3s;
+        }
+        .step-dot.active { background: var(--accent-color); }
+
+        #logout-btn {
+            background-color: transparent;
+            color: rgba(255,255,255,0.35);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 10px;
+            font-size: 13px;
+            display: none;
+            margin-bottom: 12px;
+        }
+        #logout-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
 
         #join-btn { background-color: var(--accent-color); color: #000000; font-size: 16px; box-shadow: 0 4px 15px var(--accent-glow); }
         #join-btn:hover:not(:disabled) { background-color: #00b8cc; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,229,255,0.3); }
@@ -203,10 +340,74 @@
     <div id="main-container">
         <!-- 인증 섹션 -->
         <div id="auth-section">
-            <button id="google-login-btn">Sign in with Google</button>
-            <button id="anon-login-btn">Guest Login</button>
+
+            <!-- ① 3개 버튼 그룹 -->
+            <div class="auth-btn-group">
+                <button id="google-login-btn">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18L12.048 13.562c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+                        <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+                <button id="email-login-btn-main">✉️ 이메일 로그인</button>
+                <button id="email-signup-btn-main">✨ 이메일로 회원가입</button>
+            </div>
+
+            <!-- ② 이메일 로그인 폼 (토글) -->
+            <div class="auth-form-panel" id="login-form-panel">
+                <div class="auth-form-inner">
+                    <div class="form-title" id="login-form-title">이메일 로그인</div>
+                    <input type="email" id="email-input" placeholder="이메일 주소">
+                    <input type="password" id="password-input" placeholder="비밀번호 (6자 이상)">
+                    <button class="auth-submit-btn primary" id="email-login-btn">로그인</button>
+                </div>
+            </div>
+
+            <!-- ③ 이메일 회원가입 폼 (단계별) -->
+            <div class="auth-form-panel" id="signup-form-panel">
+                <div class="auth-form-inner">
+
+                    <!-- 스텝 표시 -->
+                    <div class="step-indicator">
+                        <div class="step-dot active" id="step-dot-1"></div>
+                        <div style="width:20px; height:1px; background:rgba(255,255,255,0.1);"></div>
+                        <div class="step-dot" id="step-dot-2"></div>
+                        <div style="width:20px; height:1px; background:rgba(255,255,255,0.1);"></div>
+                        <div class="step-dot" id="step-dot-3"></div>
+                        <span id="step-label" style="margin-left:6px;">이메일 입력</span>
+                    </div>
+
+                    <!-- Step 1: 이메일 입력 + 인증 메일 발송 -->
+                    <div id="signup-step-1">
+                        <input type="email" id="signup-email-input" placeholder="가입할 이메일 주소" style="margin-bottom:0;">
+                        <div class="form-hint" id="signup-hint-1" style="margin-top:8px;">인증 메일을 발송해 드립니다.</div>
+                        <button class="auth-submit-btn primary" id="send-verify-btn" style="margin-top:10px;">인증 메일 발송</button>
+                    </div>
+
+                    <!-- Step 2: 인증 확인 대기 -->
+                    <div id="signup-step-2" style="display:none; text-align:center;">
+                        <div style="font-size:32px; margin-bottom:8px;">📬</div>
+                        <div class="form-hint" id="signup-hint-2">이메일을 확인하고 인증 링크를 클릭하세요.<br>완료 후 아래 버튼을 눌러주세요.</div>
+                        <button class="auth-submit-btn primary" id="check-verify-btn" style="margin-top:12px;">인증 완료 확인</button>
+                        <button style="background:transparent; border:none; color:rgba(255,255,255,0.3); font-size:12px; cursor:pointer; margin-top:6px; width:100%; padding:6px;" id="resend-verify-btn">메일 재전송</button>
+                    </div>
+
+                    <!-- Step 3: 비밀번호 설정 -->
+                    <div id="signup-step-3" style="display:none;">
+                        <input type="password" id="signup-pw-input" placeholder="비밀번호 (6자 이상)" style="margin-bottom:0;">
+                        <input type="password" id="signup-pw-confirm-input" placeholder="비밀번호 확인 (재입력)" style="margin-bottom:0; margin-top:10px;">
+                        <div class="form-hint" id="pw-match-hint" style="margin-top:6px; min-height:16px;"></div>
+                        <button class="auth-submit-btn primary" id="email-signup-btn" style="margin-top:4px;" disabled>가입 완료</button>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
-        <button id="logout-btn">Logout</button>
+        <button id="logout-btn">로그아웃</button>
 
         <h2 id="app-title">BOUNDLESS VOICE TALK</h2>
         
@@ -332,7 +533,7 @@
             reportBtn: "🚨 Report Toxic User",
             alertInput: "Please enter a topic!",
             alertJoin: (topic, max) => `Joined [${topic}] channel! (${max} people max) Waiting for peers...`,
-            toggleBtn: "KR",
+            toggleBtn: "한국어",
             opt3: "3 members", opt4: "4 members (recommended)", opt6: "6 members",
             repTitle: "My Reputation Profile",
             badgeManner: "Manners", badgeLogic: "Logic", badgeHumor: "Humor",
@@ -352,7 +553,11 @@
             reportTitle: "🚨 Report Toxic User",
             reportDesc: "Select the user you wish to report. The past 1 minute of voice dialogue will be uploaded and audited by AI Safeguard.",
             reportSuccess: "Report Submitted. The target is being evaluated under AI surveillance.",
-            badgeSuccess: "Reputation Badge successfully transferred!"
+            badgeSuccess: "Reputation Badge successfully transferred!",
+            emailPlaceholder: "Email address (e.g., test@gmail.com)",
+            passwordPlaceholder: "Password (minimum 6 characters)",
+            emailLogin: "Login",
+            emailSignup: "Sign Up"
         },
         ko: {
             title: "바운들리스 음성 토킹",
@@ -384,14 +589,17 @@
             reportTitle: "🚨 불량 유저 신고하기",
             reportDesc: "신고 대상을 선택해 주세요. 신고 시점 기준 '최근 1분간'의 실시간 음성 스트림 결합 데이터가 AI 유해성 감별 백엔드로 전송됩니다.",
             reportSuccess: "신고 완료. 유해 발언이 확인되면 즉시 강력 영구 처분이 단행됩니다.",
-            badgeSuccess: "상대방의 평판 프로필에 배지를 성공적으로 누적했습니다!"
+            badgeSuccess: "상대방의 평판 프로필에 배지를 성공적으로 누적했습니다!",
+            emailPlaceholder: "이메일 주소 (예: test@naver.com)",
+            passwordPlaceholder: "비밀번호 (6자리 이상)",
+            emailLogin: "로그인",
+            emailSignup: "회원가입"
         }
     };
 
     // 3. Authentication & Security Middleware
     auth.onAuthStateChanged((user) => {
         const googleBtn = document.getElementById("google-login-btn");
-        const anonBtn = document.getElementById("anon-login-btn");
         const logoutBtn = document.getElementById("logout-btn");
         const reputationSection = document.getElementById("reputation-section");
         const startBtn = document.getElementById("join-btn");
@@ -407,9 +615,7 @@
                 }
             });
 
-            if (googleBtn) googleBtn.style.display = "none";
-            if (anonBtn) anonBtn.style.display = "none";
-            if (loginSection) loginSection.style.display = "none";
+            document.getElementById("auth-section").style.display = "none";
             if (logoutBtn) logoutBtn.style.display = "inline-block";
             if (reputationSection) reputationSection.style.display = "block";
             if (startBtn && !isJoined) startBtn.disabled = false;
@@ -423,9 +629,7 @@
             });
 
         } else {
-            if (googleBtn) googleBtn.style.display = "inline-block";
-            if (anonBtn) anonBtn.style.display = "inline-block";
-            if (loginSection) loginSection.style.display = "flex";
+            document.getElementById("auth-section").style.display = "flex";
             if (logoutBtn) logoutBtn.style.display = "none";
             if (reputationSection) reputationSection.style.display = "none";
             if (startBtn) startBtn.disabled = true;
@@ -466,9 +670,13 @@
         document.getElementById('rep-m-title').innerText = lang.reportTitle;
         document.getElementById('rep-m-desc').innerText = lang.reportDesc;
 
-        document.getElementById('google-login-btn').innerText = (currentLang === 'en') ? "Sign in with Google" : "구글 로그인";
-        document.getElementById('anon-login-btn').innerText = (currentLang === 'en') ? "Guest Login" : "게스트 로그인";
-        document.getElementById('logout-btn').innerText = (currentLang === 'en') ? "Logout" : "로그아웃";
+// 수정한 코드: .querySelector('span')을 완전히 제거했습니다.
+if (document.getElementById('google-login-btn')) {
+    document.getElementById('google-login-btn').innerText = (currentLang === 'en') ? "Sign in with Google" : "구글 로그인";
+}
+document.getElementById('logout-btn').innerText = (currentLang === 'en') ? "Logout" : "로그아웃";
+document.getElementById('email-login-btn-main').innerText = (currentLang === 'en') ? "Email Login" : "이메일 로그인";
+document.getElementById('email-signup-btn-main').innerText = (currentLang === 'en') ? "Sign Up with Email" : "이메일로 회원가입";
 
         if (!document.getElementById('badge-modal').classList.contains('active')) {
             document.getElementById('summary-headline').innerText = lang.aiLoading;
@@ -481,8 +689,181 @@
         auth.signInWithPopup(provider).catch((error) => console.error(error));
     });
 
-    document.getElementById('anon-login-btn').addEventListener('click', () => {
-        auth.signInAnonymously().catch((error) => console.error(error));
+    // ── 이메일 로그인 토글 ──
+    let loginFormOpen = false;
+    let signupFormOpen = false;
+
+    document.getElementById('email-login-btn-main').addEventListener('click', () => {
+        loginFormOpen = !loginFormOpen;
+        document.getElementById('login-form-panel').classList.toggle('open', loginFormOpen);
+        // 회원가입 폼은 닫기
+        if (loginFormOpen && signupFormOpen) {
+            signupFormOpen = false;
+            document.getElementById('signup-form-panel').classList.remove('open');
+        }
+    });
+
+    document.getElementById('email-signup-btn-main').addEventListener('click', () => {
+        signupFormOpen = !signupFormOpen;
+        document.getElementById('signup-form-panel').classList.toggle('open', signupFormOpen);
+        // 로그인 폼은 닫기
+        if (signupFormOpen && loginFormOpen) {
+            loginFormOpen = false;
+            document.getElementById('login-form-panel').classList.remove('open');
+        }
+        if (signupFormOpen) resetSignupSteps();
+    });
+
+    // ── 이메일 로그인 제출 ──
+    document.getElementById('email-login-btn').addEventListener('click', () => {
+        const email = document.getElementById('email-input').value.trim();
+        const password = document.getElementById('password-input').value;
+        if (!email || !password) {
+            alert(currentLang === 'ko' ? "이메일과 비밀번호를 입력해 주세요." : "Please enter email and password.");
+            return;
+        }
+        auth.signInWithEmailAndPassword(email, password)
+            .catch(() => {
+                alert(currentLang === 'ko' ? "로그인 실패: 이메일이나 비밀번호를 확인해주세요." : "Login failed: Check your email and password.");
+            });
+    });
+
+    // ── 회원가입 단계별 로직 ──
+    let signupVerifiedEmail = null;
+    let tempSignupUser = null;
+
+    function resetSignupSteps() {
+        signupVerifiedEmail = null;
+        tempSignupUser = null;
+        showSignupStep(1);
+        document.getElementById('signup-email-input').value = "";
+        document.getElementById('signup-pw-input').value = "";
+        document.getElementById('signup-pw-confirm-input').value = "";
+        document.getElementById('pw-match-hint').innerText = "";
+        document.getElementById('email-signup-btn').disabled = true;
+    }
+
+    function showSignupStep(step) {
+        document.getElementById('signup-step-1').style.display = step === 1 ? 'block' : 'none';
+        document.getElementById('signup-step-2').style.display = step === 2 ? 'block' : 'none';
+        document.getElementById('signup-step-3').style.display = step === 3 ? 'block' : 'none';
+        ['step-dot-1','step-dot-2','step-dot-3'].forEach((id, i) => {
+            document.getElementById(id).classList.toggle('active', i < step);
+        });
+        const labels = ['이메일 입력', '메일 인증', '비밀번호 설정'];
+        document.getElementById('step-label').innerText = labels[step - 1];
+    }
+
+    // Step 1: 인증 메일 발송
+    document.getElementById('send-verify-btn').addEventListener('click', async () => {
+        const email = document.getElementById('signup-email-input').value.trim();
+        if (!email) {
+            alert(currentLang === 'ko' ? "이메일을 입력해 주세요." : "Please enter your email.");
+            return;
+        }
+
+        const btn = document.getElementById('send-verify-btn');
+        btn.disabled = true;
+        btn.innerText = "발송 중...";
+
+        try {
+            // 임시 랜덤 비밀번호로 계정 생성 후 인증 메일 발송
+            const tempPassword = "Temp_" + Math.random().toString(36).slice(2, 10) + "!1";
+            const cred = await auth.createUserWithEmailAndPassword(email, tempPassword);
+            tempSignupUser = cred.user;
+            signupVerifiedEmail = email;
+
+            await tempSignupUser.sendEmailVerification();
+            showSignupStep(2);
+        } catch (error) {
+            if (error.code === 'auth/email-already-in-use') {
+                alert(currentLang === 'ko' ? "이미 가입된 이메일입니다. 이메일 로그인을 이용해 주세요." : "Email already in use. Please log in instead.");
+            } else {
+                alert("오류: " + error.message);
+            }
+            btn.disabled = false;
+            btn.innerText = "인증 메일 발송";
+        }
+    });
+
+    // Step 2: 인증 완료 확인
+    document.getElementById('check-verify-btn').addEventListener('click', async () => {
+        if (!tempSignupUser) return;
+        const btn = document.getElementById('check-verify-btn');
+        btn.disabled = true;
+        btn.innerText = "확인 중...";
+
+        try {
+            await tempSignupUser.reload();
+            if (tempSignupUser.emailVerified) {
+                showSignupStep(3);
+            } else {
+                alert(currentLang === 'ko' ? "아직 이메일 인증이 완료되지 않았습니다. 받은 메일함을 확인해 주세요." : "Email not verified yet. Please check your inbox.");
+                btn.disabled = false;
+                btn.innerText = "인증 완료 확인";
+            }
+        } catch(e) {
+            alert("오류: " + e.message);
+            btn.disabled = false;
+            btn.innerText = "인증 완료 확인";
+        }
+    });
+
+    // Step 2: 메일 재전송
+    document.getElementById('resend-verify-btn').addEventListener('click', async () => {
+        if (!tempSignupUser) return;
+        try {
+            await tempSignupUser.sendEmailVerification();
+            alert(currentLang === 'ko' ? "인증 메일을 재전송했습니다." : "Verification email resent.");
+        } catch(e) {
+            alert("재전송 실패: " + e.message);
+        }
+    });
+
+    // Step 3: 비밀번호 입력 실시간 확인
+    function checkPwMatch() {
+        const pw = document.getElementById('signup-pw-input').value;
+        const pw2 = document.getElementById('signup-pw-confirm-input').value;
+        const hint = document.getElementById('pw-match-hint');
+        const btn = document.getElementById('email-signup-btn');
+
+        if (!pw2) { hint.innerText = ""; btn.disabled = true; return; }
+        if (pw.length < 6) {
+            hint.style.color = "#ff6b6b";
+            hint.innerText = "비밀번호는 6자 이상이어야 합니다.";
+            btn.disabled = true;
+        } else if (pw !== pw2) {
+            hint.style.color = "#ff6b6b";
+            hint.innerText = "비밀번호가 일치하지 않습니다.";
+            btn.disabled = true;
+        } else {
+            hint.style.color = "#34c759";
+            hint.innerText = "✓ 비밀번호가 일치합니다.";
+            btn.disabled = false;
+        }
+    }
+    document.getElementById('signup-pw-input').addEventListener('input', checkPwMatch);
+    document.getElementById('signup-pw-confirm-input').addEventListener('input', checkPwMatch);
+
+    // Step 3: 가입 완료 (비밀번호 업데이트)
+    document.getElementById('email-signup-btn').addEventListener('click', async () => {
+        if (!tempSignupUser) return;
+        const pw = document.getElementById('signup-pw-input').value;
+        const btn = document.getElementById('email-signup-btn');
+        btn.disabled = true;
+        btn.innerText = "처리 중...";
+
+        try {
+            await tempSignupUser.updatePassword(pw);
+            alert(currentLang === 'ko' ? "🎉 회원가입이 완료되었습니다! 환영합니다." : "🎉 Signup complete! Welcome.");
+            signupFormOpen = false;
+            document.getElementById('signup-form-panel').classList.remove('open');
+            tempSignupUser = null;
+        } catch(e) {
+            alert("오류: " + e.message);
+            btn.disabled = false;
+            btn.innerText = "가입 완료";
+        }
     });
 
     document.getElementById('logout-btn').addEventListener('click', () => {
