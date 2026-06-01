@@ -80,6 +80,9 @@
         }
 
         h2 { font-size: 24px; font-weight: 300; letter-spacing: 4px; margin-bottom: 25px; text-transform: uppercase; text-align: center; color: #fff; }
+
+        /* 추가된 서브타이틀 스타일 */
+        .sub-title { font-size: 14px; color: rgba(255,255,255,0.6); text-align: center; margin-top: -20px; margin-bottom: 30px; letter-spacing: 1px; }
         
         .input-group { width: 100%; position: relative; margin-bottom: 20px; }
         input {
@@ -338,6 +341,10 @@
     </div>
 
     <div id="main-container">
+        //제목과 서브타이틀
+        <h2 id="app-title">BOUNDLESS VOICE TALK</h2>
+        <p id="app-subtitle" class="sub-title">talk about anything with anybody!</p>
+
         <!-- 인증 섹션 -->
         <div id="auth-section">
 
@@ -409,7 +416,8 @@
         </div>
         <button id="logout-btn">로그아웃</button>
 
-        <h2 id="app-title">BOUNDLESS VOICE TALK</h2>
+        <!-- 추가됨: 로그인 후에만 노출될 요소들을 감싸는 컨테이너 -->
+        <div id="talk-controls" style="display: none; width: 100%;">
         
         <div class="input-group">
             <input type="text" id="topic-input" placeholder="Enter a topic (e.g., tesla, love)">
@@ -440,6 +448,8 @@
 
         <div id="channel-debug"></div>
     </div>
+    </div>
+
 
     <!-- 종합 평가 및 배지 선물 모달창 -->
     <div class="modal-overlay" id="badge-modal">
@@ -604,6 +614,7 @@
         const reputationSection = document.getElementById("reputation-section");
         const startBtn = document.getElementById("join-btn");
         const loginSection = document.getElementById("auth-section");
+        const talkControls = document.getElementById("talk-controls");
 
         if (user) {
             // [보안 핵심] 로그인 즉시 Realtime DB에서 해당 유저의 밴 유무 실시간 리스닝 수행
@@ -618,6 +629,7 @@
             document.getElementById("auth-section").style.display = "none";
             if (logoutBtn) logoutBtn.style.display = "inline-block";
             if (reputationSection) reputationSection.style.display = "block";
+            if (talkControls) talkControls.style.display = "block";
             if (startBtn && !isJoined) startBtn.disabled = false;
 
             // 평판 데이터 연동 (배지 수 누적 리스닝)
@@ -632,6 +644,7 @@
             document.getElementById("auth-section").style.display = "flex";
             if (logoutBtn) logoutBtn.style.display = "none";
             if (reputationSection) reputationSection.style.display = "none";
+            if (talkControls) talkControls.style.display = "none";
             if (startBtn) startBtn.disabled = true;
             document.getElementById("ban-overlay").style.display = "none";
         }
