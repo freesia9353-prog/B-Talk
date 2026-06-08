@@ -562,9 +562,10 @@
 
                     <div id="signup-step-2" style="display:none; text-align:center;">
                         <div style="font-size:32px; margin-bottom:8px;">📬</div>
-                        <div class="form-hint" id="signup-hint-2">이메일을 확인하고 인증 링크를 클릭하세요.<br>완료 후 아래 버튼을 눌러주세요.</div>
-                        <button class="auth-submit-btn primary" id="check-verify-btn" style="margin-top:12px;">인증 완료 확인</button>
-                        <button style="background:transparent; border:none; color:rgba(255,255,255,0.3); font-size:12px; cursor:pointer; margin-top:6px; width:100%; padding:6px;" id="resend-verify-btn">메일 재전송</button>
+                        <div class="form-hint" id="signup-hint-2">이메일로 발송된 6자리 코드를 입력하세요.</div>
+                        <input type="text" id="verify-code-input" placeholder="인증 코드 6자리" maxlength="6" style="text-align:center; letter-spacing:6px; font-size:18px; margin-top:10px;">
+                        <button class="auth-submit-btn primary" id="check-verify-btn" style="margin-top:12px;">인증 확인</button>
+                        <button style="background:transparent; border:none; color:rgba(255,255,255,0.3); font-size:12px; cursor:pointer; margin-top:6px; width:100%; padding:6px;" id="resend-verify-btn">코드 재전송</button>
                     </div>
 
                     <div id="signup-step-3" style="display:none;">
@@ -1124,7 +1125,11 @@
         document.getElementById('step-label').innerText = lang.stepLabels[step - 1];
     }
 
-    // Step 1: 인증 메일 발송
+    // ── 회원가입 인증 코드 관리 ──
+    let signupVerifyCode = null;       // 생성한 6자리 코드
+    let signupVerifyEmail = null;      // 인증 대상 이메일
+
+    // Step 1: 인증 코드 발송 (Netlify 함수 경유)
     document.getElementById('send-verify-btn').addEventListener('click', async () => {
         const email = document.getElementById('signup-email-input').value.trim();
         if (!email) {
@@ -1137,54 +1142,61 @@
         btn.innerText = textData[currentLang].sendVerifyBtnLoading;
 
         try {
-            // 임시 랜덤 비밀번호로 계정 생성 후 인증 메일 발송
-            const tempPassword = "Temp_" + Math.random().toString(36).slice(2, 10) + "!1";
-            const cred = await auth.createUserWithEmailAndPassword(email, tempPassword);
-            tempSignupUser = cred.user;
-            signupVerifiedEmail = email;
+            // 이미 가입된 이메일인지 먼저 확인 (로그인 시도 → 성공하면 이미 존재)
+            // fetchSignInMethodsForEmail으로 체크
+            const methods = await auth.fetchSignInMethodsForEmail(email);
+            if (methods.length > 0) {
+                alert(currentLang === 'ko' ? "이미 가입된 이메일입니다. 이메일 로그인을 이용해 주세요." : "Email already in use. Please log in instead.");
+                btn.disabled = false;
+                btn.innerText = textData[currentLang].sendVerifyBtnText;
+                return;
+            }
 
-            await tempSignupUser.sendEmailVerification();
+            // 6자리 인증 코드 생성 후 Netlify 함수로 메일 발송
+            signupVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+            signupVerifyEmail = email;
+
+            const res = await fetch("/.netlify/functions/sendVerifyEmail", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code: signupVerifyCode })
+            });
+
+            if (!res.ok) throw new Error("메일 발송 실패");
+
             showSignupStep(2);
         } catch (error) {
-            if (error.code === 'auth/email-already-in-use') {
-                alert(currentLang === 'ko' ? "이미 가입된 이메일입니다. 이메일 로그인을 이용해 주세요." : "Email already in use. Please log in instead.");
-            } else {
-                alert("오류: " + error.message);
-            }
+            alert("오류: " + error.message);
             btn.disabled = false;
             btn.innerText = textData[currentLang].sendVerifyBtnText;
         }
     });
 
-    // Step 2: 인증 완료 확인
-    document.getElementById('check-verify-btn').addEventListener('click', async () => {
-        if (!tempSignupUser) return;
-        const btn = document.getElementById('check-verify-btn');
-        btn.disabled = true;
-        btn.innerText = textData[currentLang].checkVerifyBtnLoading;
-
-        try {
-            await tempSignupUser.reload();
-            if (tempSignupUser.emailVerified) {
-                showSignupStep(3);
-            } else {
-                alert(currentLang === 'ko' ? "아직 이메일 인증이 완료되지 않았습니다. 받은 메일함을 확인해 주세요." : "Email not verified yet. Please check your inbox.");
-                btn.disabled = false;
-                btn.innerText = textData[currentLang].checkVerifyBtnText;
-            }
-        } catch(e) {
-            alert("오류: " + e.message);
-            btn.disabled = false;
-            btn.innerText = textData[currentLang].checkVerifyBtnText;
+    // Step 2: 인증 코드 확인
+    document.getElementById('check-verify-btn').addEventListener('click', () => {
+        const inputCode = document.getElementById('verify-code-input')?.value.trim();
+        if (!inputCode) {
+            alert(currentLang === 'ko' ? "인증 코드를 입력해 주세요." : "Please enter the verification code.");
+            return;
+        }
+        if (inputCode === signupVerifyCode) {
+            showSignupStep(3);
+        } else {
+            alert(currentLang === 'ko' ? "인증 코드가 올바르지 않습니다. 다시 확인해 주세요." : "Incorrect code. Please try again.");
         }
     });
 
-    // Step 2: 메일 재전송
+    // Step 2: 코드 재전송
     document.getElementById('resend-verify-btn').addEventListener('click', async () => {
-        if (!tempSignupUser) return;
+        if (!signupVerifyEmail) return;
+        signupVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
         try {
-            await tempSignupUser.sendEmailVerification();
-            alert(currentLang === 'ko' ? "인증 메일을 재전송했습니다." : "Verification email resent.");
+            await fetch("/.netlify/functions/sendVerifyEmail", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: signupVerifyEmail, code: signupVerifyCode })
+            });
+            alert(currentLang === 'ko' ? "인증 코드를 재전송했습니다." : "Verification code resent.");
         } catch(e) {
             alert("재전송 실패: " + e.message);
         }
@@ -1216,20 +1228,22 @@
     document.getElementById('signup-pw-input').addEventListener('input', checkPwMatch);
     document.getElementById('signup-pw-confirm-input').addEventListener('input', checkPwMatch);
 
-    // Step 3: 가입 완료 (비밀번호 업데이트)
+    // Step 3: 가입 완료 — 여기서 처음으로 계정 생성 (자동 로그인 없음)
     document.getElementById('email-signup-btn').addEventListener('click', async () => {
-        if (!tempSignupUser) return;
+        if (!signupVerifyEmail) return;
         const pw = document.getElementById('signup-pw-input').value;
         const btn = document.getElementById('email-signup-btn');
         btn.disabled = true;
         btn.innerText = textData[currentLang].emailSignupBtnLoading;
 
         try {
-            await tempSignupUser.updatePassword(pw);
+            // 이 시점에 계정 생성 → Firebase 자동 로그인되지만 이미 완료 단계라 자연스러움
+            await auth.createUserWithEmailAndPassword(signupVerifyEmail, pw);
             alert(currentLang === 'ko' ? "🎉 회원가입이 완료되었습니다! 환영합니다." : "🎉 Signup complete! Welcome.");
             signupFormOpen = false;
+            signupVerifyCode = null;
+            signupVerifyEmail = null;
             document.getElementById('signup-form-panel').classList.remove('open');
-            tempSignupUser = null;
         } catch(e) {
             alert("오류: " + e.message);
             btn.disabled = false;
