@@ -632,8 +632,8 @@
 
     <div id="user-action-buttons">
     <button id="btn-talk-again" style="margin: 0; display: none;">🗣️ 또 대화하기</button>
-    <button id="toggle-rep-btn">📊 내 평판 대시보드</button>
-    <button id="logout-btn">로그아웃</button>
+    <button id="toggle-rep-btn" style="display: none;">📊 내 평판 대시보드</button>
+    <button id="logout-btn" style="display: none;">로그아웃</button>
           </div>
 
 
@@ -911,6 +911,22 @@
         const talkControls = document.getElementById("talk-controls");
 
         if (user) {
+        // presence 로직은 로그인된 경우에만 실행
+        const myPresenceRef = database.ref('users/' + user.uid + '/presence');
+        const connectedRef = database.ref('.info/connected');
+        connectedRef.on('value', (snap) => {
+            if (snap.val() === true) {
+                myPresenceRef.onDisconnect().set({
+                    online: false,
+                    last_changed: firebase.database.ServerValue.TIMESTAMP
+                }).then(() => {
+                    myPresenceRef.set({
+                        online: true,
+                        last_changed: firebase.database.ServerValue.TIMESTAMP
+                    });
+                });
+            }
+        });
             // [보안 핵심] 로그인 즉시 Realtime DB에서 해당 유저의 밴 유무 실시간 리스닝 수행
             database.ref('users/' + user.uid + '/banned').on('value', (snapshot) => {
                 if (snapshot.val() === true) {
@@ -1881,12 +1897,23 @@ document.getElementById('btn-talk-again').addEventListener('click', () => {
     loadFriendsList();
 });
 
+// 1. 실시간 리스너들을 추적하고 해제하기 위한 전역 배열 변수
+let activePresenceRefs = [];
+
 function loadFriendsList() {
     if (!auth.currentUser) return;
     const myUid = auth.currentUser.uid;
+    const container = document.getElementById('friends-list-container');
+    
+    // [개선 3] 데이터를 요청하기 직전에 화면에 로딩 상태를 즉시 표시
+    container.innerHTML = `<div style="padding: 20px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.4);">불러오는 중...</div>`;
+
+    // [개선 1-1] 이전 모달 열기 시 등록되었던 리스너가 있다면 안전하게 먼저 종료
+    activePresenceRefs.forEach(ref => ref.off());
+    activePresenceRefs = [];
+
     database.ref(`users/${myUid}/friends`).once('value', (snapshot) => {
-        const container = document.getElementById('friends-list-container');
-        container.innerHTML = "";
+        container.innerHTML = ""; // 데이터가 도착하면 로딩 문구 제거
         const friendsData = snapshot.val();
 
         // accepted 상태인 친구만 필터
@@ -1907,9 +1934,14 @@ function loadFriendsList() {
 
             const el = document.createElement('div');
             el.className = "friend-item-box";
+            el.id = `friend-item-${friendUid}`;
+            
             el.innerHTML = `
                 <div class="friend-info">
-                    <span class="friend-name">👤 ${displayName}</span>
+                    <span class="friend-name">
+                        <span id="status-${friendUid}" style="font-size: 10px; color: gray;">⚫</span> 
+                        👤 ${displayName}
+                    </span>
                     <span class="friend-date">${textData[currentLang].lastTalked} ${dateStr}</span>
                 </div>
                 <div class="friend-action-group">
@@ -1918,30 +1950,68 @@ function loadFriendsList() {
                 </div>
             `;
             container.appendChild(el);
+
+            // [개선 1-2] 친구의 접속 상태 경로를 변수에 저장하고 추적 배열에 삽입
+            const presenceRef = database.ref(`users/${friendUid}/presence/online`);
+            activePresenceRefs.push(presenceRef);
+
+            // 실시간 접속 상태 리스닝
+            presenceRef.on('value', (statusSnap) => {
+                const isOnline = statusSnap.val();
+                const statusDot = document.getElementById(`status-${friendUid}`);
+                if (statusDot) {
+                    if (isOnline) {
+                        statusDot.innerText = '🟢';
+                        statusDot.style.color = '#34c759';
+                    } else {
+                        statusDot.innerText = '⚪';
+                        statusDot.style.color = 'gray';
+                    }
+                }
+            });
         });
     });
 }
 
 function closeFriendsModal() {
     document.getElementById('friends-modal').classList.remove('active');
+    
+    // [개선 1-3] 모달이 닫힐 때 모든 친구의 실시간 접속 상태 관찰을 종료(.off())하여 메모리 누수 방지
+    if (activePresenceRefs.length > 0) {
+        activePresenceRefs.forEach(ref => ref.off());
+        activePresenceRefs = []; // 배열 비우기
+    }
 }
 
 // 3. 친구와 재연결 실행 (AI 우회 및 다이렉트 방 개설)
 async function connectToFriend(friendUid) {
     if (!auth.currentUser) return;
     const myUid = auth.currentUser.uid;
-    
-    // 마지막 대화 날짜 갱신
-    database.ref(`users/${myUid}/friends/${friendUid}`).update({
-        lastTalked: firebase.database.ServerValue.TIMESTAMP
-    });
-    
+
+    // 통화 전 친구의 온라인 상태를 Firebase에서 실시간 재조회
+    const presenceSnap = await database.ref(`users/${friendUid}/presence/online`).once('value');
+    const isOnline = presenceSnap.val() === true;
+
+    if (!isOnline) {
+        const msg = currentLang === 'ko'
+            ? "친구가 현재 오프라인 상태입니다. 온라인일 때 다시 시도해 주세요."
+            : "This friend is currently offline. Please try again when they are online.";
+        alert(msg);
+        return;
+    }
+
+    // 나와 상대방 모두의 친구 목록에서 lastTalked 시간을 동시에 갱신 (양방향 반영)
+    const updates = {};
+    updates[`users/${myUid}/friends/${friendUid}/lastTalked`] = firebase.database.ServerValue.TIMESTAMP;
+    updates[`users/${friendUid}/friends/${myUid}/lastTalked`] = firebase.database.ServerValue.TIMESTAMP;
+    database.ref().update(updates);
+
     // 서로의 UID를 알파벳 순으로 정렬해 조합 (누가 누르든 항상 동일한 1:1 방 ID가 생성됨)
     const privateChannelId = `🔒_${[myUid, friendUid].sort().join("_")}`;
-    
+
     closeFriendsModal();
     alert(textData[currentLang].privateChannelAlert(`Friend(${friendUid.substring(0,8)})`));
-    
+
     // 숨어있는 topic 입력창에 비밀 채널 ID를 강제 주입 후 시작 버튼 강제 클릭 트리거
     const topicInput = document.getElementById('topic-input');
     topicInput.value = privateChannelId;
