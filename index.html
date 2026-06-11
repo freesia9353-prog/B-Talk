@@ -911,22 +911,9 @@
         const talkControls = document.getElementById("talk-controls");
 
         if (user) {
-        // presence 로직은 로그인된 경우에만 실행
-        const myPresenceRef = database.ref('users/' + user.uid + '/presence');
-        const connectedRef = database.ref('.info/connected');
-        connectedRef.on('value', (snap) => {
-            if (snap.val() === true) {
-                myPresenceRef.onDisconnect().set({
-                    online: false,
-                    last_changed: firebase.database.ServerValue.TIMESTAMP
-                }).then(() => {
-                    myPresenceRef.set({
-                        online: true,
-                        last_changed: firebase.database.ServerValue.TIMESTAMP
-                    });
-                });
-            }
-        });
+            // presence 로직은 setupPresence()로 분리 — 인증 완료 후 별도 호출
+            setupPresence(user.uid);
+
             // [보안 핵심] 로그인 즉시 Realtime DB에서 해당 유저의 밴 유무 실시간 리스닝 수행
             database.ref('users/' + user.uid + '/banned').on('value', (snapshot) => {
                 if (snapshot.val() === true) {
@@ -969,6 +956,31 @@
             document.getElementById("ban-overlay").style.display = "none";
         }
     });
+
+    // presence 독립 함수 — onAuthStateChanged 타이밍과 분리하여 배포 환경에서도 안정적으로 동작
+    function setupPresence(uid) {
+        const myPresenceRef = database.ref('users/' + uid + '/presence');
+        const connectedRef = database.ref('.info/connected');
+
+        // 기존 리스너 중복 방지
+        connectedRef.off('value');
+
+        connectedRef.on('value', (snap) => {
+            if (snap.val() !== true) return;
+
+            // 브라우저 종료/연결 끊김 시 오프라인으로 자동 기록
+            myPresenceRef.onDisconnect().set({
+                online: false,
+                last_changed: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                // 연결 확인 후 온라인으로 즉시 기록
+                myPresenceRef.set({
+                    online: true,
+                    last_changed: firebase.database.ServerValue.TIMESTAMP
+                }).catch(e => console.error("Presence write failed:", e));
+            }).catch(e => console.error("onDisconnect setup failed:", e));
+        });
+    }
 
     // 세션 유지 설정
     auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch((error) => {
