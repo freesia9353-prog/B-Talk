@@ -857,6 +857,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     // 2. Global State Management
     let currentLang = "ko"; 
     const AGORA_APP_ID = "71b6f8c1cb424be1b2b5480d447e69e2";
+    const TOKEN_SERVER_URL = "https://b-talk-0gi0.onrender.com";
     const SIGNAL_SERVER_URL = "https://kvdb.io/YAPuhyeXZWiNidFcsstzqK/";
 
     let client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -1648,8 +1649,17 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             const firebaseUser = auth.currentUser;
             const agoraUid = firebaseUser ? firebaseUser.uid : null;
 
-            // 💡 아고라 서버에는 안전하게 변환된 'safeAgoraChannelId'로 접속합니다.
-            myUid = await client.join(AGORA_APP_ID, safeAgoraChannelId, null, agoraUid);
+            // 💡 토큰 서버에서 Agora 토큰 발급 후 접속
+            let agoraToken = null;
+            try {
+                const tokenRes = await fetch(`${TOKEN_SERVER_URL}/token?channelName=${encodeURIComponent(safeAgoraChannelId)}&uid=0`);
+                const tokenData = await tokenRes.json();
+                agoraToken = tokenData.token;
+            } catch(e) {
+                console.error("Token fetch failed:", e);
+                throw new Error("토큰 서버 연결 실패. 잠시 후 다시 시도해 주세요.");
+            }
+            myUid = await client.join(AGORA_APP_ID, safeAgoraChannelId, agoraToken, 0);
             isJoined = true;
             roomParticipants = [];
             sessionParticipants = [];
