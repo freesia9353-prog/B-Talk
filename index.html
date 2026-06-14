@@ -798,7 +798,8 @@
     let signalTimer = null;
 
     // 다중 참여자 목록 추적 (본인 제외)
-    let roomParticipants = []; 
+    let roomParticipants = []; // 현재 방에 있는 참여자 (나간 사람은 제거됨)
+    let sessionParticipants = []; // 세션 중 한번이라도 참여한 모든 사람 (평가용, 먼저 나간 사람 포함)
     let selectedVoteTarget = null;
     let selectedReportTarget = null;
 
@@ -1424,7 +1425,7 @@
             });
             if (!response.ok) throw new Error("Backend response error");
             const data = await response.json();
-            let topic = data.topic ? data.topic.trim() : "general"; // 정규식 제거
+            let topic = data.topic ? data.topic.trim().toLowerCase() : "general"; // 소문자 정규화로 대소문자 무관 매칭
             if(!topic) topic = "general";
             statusEl.innerText = lang.matchingDone(topic);
             return topic;
@@ -1432,8 +1433,8 @@
             console.error("AI matching failed, moving to fallback route:", error);
             // 최신 언어 선택 상태를 원자적으로 강제 반영하기 위해 textData[currentLang] 직접 참조
             statusEl.innerText = textData[currentLang].matchingFail;
-            // 💡 에러 발생 시 유저가 입력한 주제를 그대로 반환합니다!
-            return userInput.trim() || "general";
+            // 💡 에러 발생 시 유저가 입력한 주제를 소문자로 정규화하여 반환합니다!
+            return userInput.trim().toLowerCase() || "general";
         }
     }
 
@@ -1532,6 +1533,7 @@
             myUid = await client.join(AGORA_APP_ID, safeAgoraChannelId, null, agoraUid);
             isJoined = true;
             roomParticipants = [];
+            sessionParticipants = []; // 세션 전체 참여자 기록 (먼저 나간 사람도 보존)
 
             // 마이크 활성화 및 아고라 채널 퍼블리시
             localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
@@ -1569,6 +1571,10 @@
             if (!roomParticipants.includes(user.uid)) {
                 roomParticipants.push(user.uid);
                 renderParticipantsUI();
+            }
+            // 세션 전체 참여자 목록에도 추가 (나중에 평가 시 사용)
+            if (!sessionParticipants.includes(user.uid)) {
+                sessionParticipants.push(user.uid);
             }
 
             // Web Audio API 오디오 믹서 노드가 구축되어 있으면 원격 오디오 스트림 결합 믹싱 처리
@@ -1745,12 +1751,12 @@
         
         toggleVoteBadgeButtons(false);
 
-        if (roomParticipants.length === 0) {
+        if (sessionParticipants.length === 0) {
             container.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.4); text-align:center; padding:10px; line-height:1.4;">${currentLang === 'ko' ? "• 대화 시간이 짧거나 피어 참여자 기록이 확보되지 않아 배지 대상이 없습니다." : "• Call session was too brief or no peer connection logged."}</div>`;
             return;
         }
 
-        roomParticipants.forEach((uid, index) => {
+        sessionParticipants.forEach((uid, index) => {
             const btn = document.createElement('button');
             btn.className = "target-btn";
             btn.innerText = `👤 Participant ${index + 1}`;
