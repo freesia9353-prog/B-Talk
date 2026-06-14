@@ -1629,6 +1629,11 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
     document.getElementById('lang-toggle-btn').addEventListener('click', () => {
         currentLang = (currentLang === "en") ? "ko" : "en";
+        // 인트로 화면 언어 업데이트
+        const introDescEl = document.getElementById('intro-desc');
+        const introBtnEl = document.getElementById('intro-start-btn');
+        if (introDescEl) introDescEl.innerHTML = textData[currentLang].introDesc;
+        if (introBtnEl) introBtnEl.textContent = textData[currentLang].introBtn;
         updateUI();
         if (isJoined) renderParticipantsUI();
     });
@@ -2487,6 +2492,13 @@ async function connectToFriend(friendUid) {
     topicInput.value = privateChannelId;
     document.getElementById('join-btn').click();
 }
+
+// ── 인트로 화면 제어 ──
+    function startFromIntro() {
+        const intro = document.getElementById('intro-screen');
+        intro.classList.add('hide');
+        setTimeout(() => { intro.style.display = 'none'; }, 500);
+    }
 
 // ── 영구정지 이의신청 제출 ──
 async function submitAppeal() {
