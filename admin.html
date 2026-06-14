@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-TALK 관리자</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg: #0d0e12;
+            --surface: #14161d;
+            --surface2: #1a1d26;
+            --border: rgba(255,255,255,0.07);
+            --accent: #00e5ff;
+            --accent-dim: rgba(0,229,255,0.12);
+            --danger: #ff3b30;
+            --danger-dim: rgba(255,59,48,0.12);
+            --warn: #ff9500;
+            --warn-dim: rgba(255,149,0,0.12);
+            --green: #34c759;
+            --green-dim: rgba(52,199,89,0.12);
+            --text: #e8eaf0;
+            --text-dim: rgba(255,255,255,0.38);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── 사이드바 ── */
+        #sidebar {
+            width: 220px;
+            min-height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 0 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-logo {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 6px;
+            text-shadow: 0 0 20px rgba(0,229,255,0.4);
+        }
+        .sidebar-sub {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-bottom: 32px;
+            text-transform: uppercase;
+        }
+
+        .nav-section {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 8px;
+            margin-top: 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.55);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .nav-item.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            background: var(--accent-dim);
+        }
+        .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+        .admin-info { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+        .admin-info span { color: var(--accent); font-weight: 600; }
+
+        /* ── 메인 ── */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #topbar {
+            height: 56px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 16px;
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+
+        #page-title {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            flex: 1;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 12px;
+            gap: 8px;
+            width: 260px;
+        }
+        .search-bar input {
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 13px;
+            width: 100%;
+        }
+        .search-bar input::placeholder { color: var(--text-dim); }
+
+        .topbar-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .topbar-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+        /* ── 컨텐츠 ── */
+        #content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* 통계 카드 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-value.accent { color: var(--accent); }
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.warn { color: var(--warn); }
+        .stat-value.green { color: var(--green); }
+
+        /* 섹션 헤더 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-title { font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
+        .section-count { font-size: 11px; color: var(--text-dim); }
+
+        /* 테이블 */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+            font-weight: 500;
+        }
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        td { padding: 12px 16px; font-size: 12.5px; vertical-align: middle; }
+
+        .uid-cell {
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .pill-active { background: var(--green-dim); color: var(--green); }
+        .pill-banned { background: var(--danger-dim); color: var(--danger); }
+        .pill-suspended { background: var(--warn-dim); color: var(--warn); }
+        .pill-warned { background: rgba(255,149,0,0.08); color: var(--warn); }
+        .pill-normal { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+        .pill-pending { background: var(--accent-dim); color: var(--accent); }
+
+        .action-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            margin-right: 5px;
+        }
+        .btn-warn { background: var(--warn-dim); color: var(--warn); }
+        .btn-warn:hover { background: rgba(255,149,0,0.25); }
+        .btn-suspend { background: var(--danger-dim); color: var(--danger); }
+        .btn-suspend:hover { background: rgba(255,59,48,0.25); }
+        .btn-ban { background: var(--danger); color: #fff; }
+        .btn-ban:hover { background: #e0302a; }
+        .btn-restore { background: var(--green-dim); color: var(--green); }
+        .btn-restore:hover { background: rgba(52,199,89,0.25); }
+        .btn-view { background: var(--accent-dim); color: var(--accent); }
+        .btn-view:hover { background: rgba(0,229,255,0.2); }
+
+        /* 로딩 / 빈 상태 */
+        .loading-row td, .empty-row td {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 32px;
+            font-size: 13px;
+        }
+
+        /* 모달 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            width: 460px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .modal .modal-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; }
+        .modal label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); display: block; margin-bottom: 6px; margin-top: 14px; }
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .modal input:focus, .modal select, .modal textarea:focus { border-color: rgba(0,229,255,0.4); }
+        .modal textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+        .modal-actions button {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-cancel { background: var(--surface2); color: var(--text-dim); }
+        .btn-confirm-danger { background: var(--danger); color: #fff; }
+        .btn-confirm-danger:hover { background: #e0302a; }
+        .btn-confirm-warn { background: var(--warn); color: #fff; }
+        .btn-confirm-restore { background: var(--green); color: #fff; }
+
+        /* 유저 상세 */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .detail-item { background: var(--surface2); border-radius: 8px; padding: 10px 14px; }
+        .detail-key { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 4px; }
+        .detail-val { font-size: 13px; font-weight: 500; }
+
+        /* 탭 */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+        .tab {
+            padding: 9px 18px;
+            font-size: 12.5px;
+            cursor: pointer;
+            color: var(--text-dim);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+        /* 이의신청 카드 */
+        .appeal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .appeal-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .appeal-uid { font-family: monospace; font-size: 11px; color: var(--text-dim); }
+        .appeal-date { font-size: 11px; color: var(--text-dim); }
+        .appeal-type { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+        .type-ban { background: var(--danger-dim); color: var(--danger); }
+        .type-suspend { background: var(--warn-dim); color: var(--warn); }
+        .appeal-text { font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 12px; padding: 10px; background: var(--surface2); border-radius: 6px; }
+        .appeal-actions { display: flex; gap: 8px; }
+
+        /* 스크롤바 */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+        /* 로그인 화면 */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .login-box {
+            text-align: center;
+            padding: 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 340px;
+        }
+        .login-logo { font-size: 22px; font-weight: 700; letter-spacing: 5px; color: var(--accent); margin-bottom: 4px; text-shadow: 0 0 20px rgba(0,229,255,0.4); }
+        .login-sub { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 28px; text-transform: uppercase; }
+        .login-notice { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+        .btn-google-login {
+            width: 100%;
+            padding: 12px;
+            background: #fff;
+            color: #111;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-google-login:hover { background: #eee; }
+        .login-error { font-size: 12px; color: var(--danger); margin-top: 14px; display: none; }
+
+        .badge-small {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; padding: 2px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px; margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div id="login-screen">
+    <div class="login-box">
+        <div class="login-logo">B-TALK</div>
+        <div class="login-sub">Admin Panel</div>
+        <div class="login-notice">관리자 계정으로 로그인해야 접근할 수 있습니다.</div>
+        <button class="btn-google-login" onclick="adminLogin()">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18L12.048 13.562c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+            Google로 로그인
+        </button>
+        <div class="login-error" id="login-error">관리자 권한이 없는 계정입니다.</div>
+    </div>
+</div>
+
+<!-- 사이드바 -->
+<div id="sidebar">
+    <div class="sidebar-logo">B-TALK</div>
+    <div class="sidebar-sub">Admin Panel</div>
+
+    <div class="nav-section">개요</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+        <span class="icon">📊</span> 대시보드
+    </div>
+
+    <div class="nav-section">회원 관리</div>
+    <div class="nav-item" onclick="navigate('users')">
+        <span class="icon">👥</span> 전체 회원
+    </div>
+    <div class="nav-item" onclick="navigate('banned')">
+        <span class="icon">🚫</span> 정지·차단 회원
+    </div>
+    <div class="nav-item" onclick="navigate('reports')">
+        <span class="icon">🚨</span> 신고 내역
+        <span class="nav-badge" id="report-badge" style="display:none">0</span>
+    </div>
+
+    <div class="nav-section">처리</div>
+    <div class="nav-item" onclick="navigate('appeals')">
+        <span class="icon">📋</span> 이의신청
+        <span class="nav-badge" id="appeal-badge" style="display:none">0</span>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="admin-info">
+            로그인: <span id="admin-email-display">—</span><br>
+            <span style="cursor:pointer; color:var(--danger); font-size:11px;" onclick="adminLogout()">로그아웃</span>
+        </div>
+    </div>
+</div>
+
+<!-- 메인 -->
+<div id="main">
+    <div id="topbar">
+        <div id="page-title">대시보드</div>
+        <div class="search-bar">
+            <span style="color:var(--text-dim); font-size:13px;">🔍</span>
+            <input type="text" id="search-input" placeholder="UID 또는 이메일 검색..." oninput="onSearch()">
+        </div>
+        <button class="topbar-btn" onclick="refreshAll()">↻ 새로고침</button>
+    </div>
+
+    <div id="content">
+
+        <!-- 대시보드 -->
+        <div class="page active" id="page-dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">전체 회원</div>
+                    <div class="stat-value accent" id="stat-total">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">영구 정지</div>
+                    <div class="stat-value danger" id="stat-banned">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">일시 정지</div>
+                    <div class="stat-value warn" id="stat-suspended">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">경고 누적</div>
+                    <div class="stat-value warn" id="stat-warned">—</div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">최근 가입 회원</div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>UID</th>
+                        <th>이메일</th>
+                        <th>상태</th>
+                        <th>배지</th>
+                        <th>액션</th>
+                    </tr></thead>
+                    <tbody id="dash-user-list">
+                        <tr class="loading-row"><td colspan="5">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-header">
+                <div class="section-title">미처리 이의신청</div>
+            </div>
+            <div id="dash-appeals"></div>
+        </div>
+
+        <!-- 전체 회원 -->
+        <div class="page" id="page-users">
+            <div class="section-header">
+                <div class="section-title">전체 회원</div>
+                <div class="section-count" id="users-count"></div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>UID</th>
+                        <th>이메일</th>
+                        <th>상태</th>
+                        <th>배지 (매너/논리/유머)</th>
+                        <th>친구 수</th>
+                        <th>액션</th>
+                    </tr></thead>
+                    <tbody id="user-list">
+                        <tr class="loading-row"><td colspan="6">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 정지·차단 회원 -->
+        <div class="page" id="page-banned">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('banned','tab-perm')">🚫 영구 정지</div>
+                <div class="tab" onclick="switchTab('banned','tab-temp')">⏸ 일시 정지</div>
+                <div class="tab" onclick="switchTab('banned','tab-warned')">⚠️ 경고 유저</div>
+            </div>
+
+            <div id="tab-perm" class="tab-content">
+                <div class="table-wrap">
+                    <table><thead><tr><th>UID</th><th>이메일</th><th>배지</th><th>액션</th></tr></thead>
+                    <tbody id="banned-list"><tr class="loading-row"><td colspan="4">불러오는 중...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div id="tab-temp" class="tab-content" style="display:none">
+                <div class="table-wrap">
+                    <table><thead><tr><th>UID</th><th>이메일</th><th>정지 해제일</th><th>사유</th><th>액션</th></tr></thead>
+                    <tbody id="suspended-list"><tr class="loading-row"><td colspan="5">불러오는 중...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div id="tab-warned" class="tab-content" style="display:none">
+                <div class="table-wrap">
+                    <table><thead><tr><th>UID</th><th>이메일</th><th>경고일</th><th>액션</th></tr></thead>
+                    <tbody id="warned-list"><tr class="loading-row"><td colspan="4">불러오는 중...</td></tr></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 신고 내역 -->
+        <div class="page" id="page-reports">
+            <div class="section-header">
+                <div class="section-title">신고 내역</div>
+                <div class="section-count" id="reports-count"></div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>신고자 UID</th>
+                        <th>피신고자 UID</th>
+                        <th>채널</th>
+                        <th>신고 일시</th>
+                        <th>상태</th>
+                        <th>액션</th>
+                    </tr></thead>
+                    <tbody id="report-list">
+                        <tr class="loading-row"><td colspan="6">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 이의신청 -->
+        <div class="page" id="page-appeals">
+            <div class="section-header">
+                <div class="section-title">이의신청 목록</div>
+                <div class="section-count" id="appeals-count"></div>
+            </div>
+            <div id="appeals-list"><div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px;">불러오는 중...</div></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 유저 상세 모달 -->
+<div class="modal-overlay" id="user-modal">
+    <div class="modal">
+        <h3 id="modal-title">회원 상세</h3>
+        <div class="modal-sub" id="modal-uid"></div>
+        <div class="detail-grid" id="modal-detail-grid"></div>
+        <div style="margin-top:12px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:8px;">제재 액션</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="action-btn btn-warn" onclick="modalAction('warn')">⚠️ 경고</button>
+                <button class="action-btn btn-suspend" onclick="modalAction('suspend')">⏸ 일시정지</button>
+                <button class="action-btn btn-ban" onclick="modalAction('ban')">🚫 영구정지</button>
+                <button class="action-btn btn-restore" onclick="modalAction('restore')">✅ 제재 해제</button>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('user-modal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- 제재 확인 모달 -->
+<div class="modal-overlay" id="action-modal">
+    <div class="modal">
+        <h3 id="action-modal-title">제재 확인</h3>
+        <div class="modal-sub" id="action-modal-sub"></div>
+        <div id="action-extra"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('action-modal')">취소</button>
+            <button id="action-confirm-btn" onclick="executeAction()">확인</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSy" + "AvnzYiPbSoY0HN6WWLTa1Ge2yB0sGm02I",
+        authDomain: "b-talk-login.firebaseapp.com",
+        databaseURL: "https://b-talk-login-default-rtdb.firebaseio.com/",
+        projectId: "b-talk-login",
+        storageBucket: "b-talk-login.appspot.com",
+        messagingSenderId: "1041735787374",
+        appId: "1:1041735787374:web:b32df90d336d69fba7577f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // ── 관리자 UID 목록 (여기에 본인 UID 추가) ──
+    const ADMIN_UIDS = new Set([
+        // 'YOUR_UID_HERE'  ← 본인 Firebase UID 입력
+    ]);
+    // 관리자 이메일로도 체크 가능
+    const ADMIN_EMAILS = new Set([
+        // 'your@email.com'
+    ]);
+
+    let allUsers = {};
+    let allReports = {};
+    let allAppeals = {};
+    let currentAction = null;
+    let currentTargetUid = null;
+    let currentPage = 'dashboard';
+
+    // ── 인증 ──
+    auth.onAuthStateChanged(async user => {
+        if (!user) {
+            document.getElementById('login-screen').style.display = 'flex';
+            return;
+        }
+        const isAdmin = ADMIN_UIDS.has(user.uid) || ADMIN_EMAILS.has(user.email);
+        if (!isAdmin) {
+            document.getElementById('login-error').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'flex';
+            await auth.signOut();
+            return;
+        }
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-email-display').textContent = user.email || user.uid.substring(0,12);
+        loadAll();
+    });
+
+    async function adminLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        try { await auth.signInWithPopup(provider); }
+        catch(e) { console.error(e); }
+    }
+    async function adminLogout() {
+        await auth.signOut();
+        location.reload();
+    }
+
+    // ── 데이터 로드 ──
+    async function loadAll() {
+        await Promise.all([loadUsers(), loadReports(), loadAppeals()]);
+        renderDashboard();
+    }
+
+    async function loadUsers() {
+        const snap = await db.ref('users').once('value');
+        allUsers = snap.val() || {};
+        renderUserList();
+        renderBannedLists();
+        updateStats();
+    }
+
+    async function loadReports() {
+        const snap = await db.ref('reports').once('value');
+        allReports = snap.val() || {};
+        renderReportList();
+        const count = Object.keys(allReports).length;
+        const badge = document.getElementById('report-badge');
+        if (count > 0) { badge.style.display = 'inline-block'; badge.textContent = count; }
+    }
+
+    async function loadAppeals() {
+        const snap = await db.ref('appeals').once('value');
+        allAppeals = snap.val() || {};
+        renderAppeals();
+        const count = Object.keys(allAppeals).length;
+        const badge = document.getElementById('appeal-badge');
+        if (count > 0) { badge.style.display = 'inline-block'; badge.textContent = count; }
+    }
+
+    function refreshAll() { loadAll(); }
+
+    // ── 통계 ──
+    function updateStats() {
+        const users = Object.values(allUsers);
+        document.getElementById('stat-total').textContent = users.length;
+        document.getElementById('stat-banned').textContent = users.filter(u => u.banned).length;
+        document.getElementById('stat-suspended').textContent = users.filter(u => u.suspendedUntil && u.suspendedUntil > Date.now()).length;
+        document.getElementById('stat-warned').textContent = users.filter(u => u.warnedAt).length;
+    }
+
+    // ── 유저 상태 헬퍼 ──
+    function getUserStatus(u) {
+        if (u.banned) return { label: '영구정지', cls: 'pill-banned' };
+        if (u.suspendedUntil && u.suspendedUntil > Date.now()) return { label: '일시정지', cls: 'pill-suspended' };
+        if (u.warnedAt) return { label: '경고', cls: 'pill-warned' };
+        return { label: '정상', cls: 'pill-normal' };
+    }
+
+    function fmtDate(ts) {
+        if (!ts) return '—';
+        return new Date(ts).toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function userRow(uid, u, cols) {
+        const st = getUserStatus(u);
+        const badges = u.badges || {};
+        const friendCount = u.friends ? Object.keys(u.friends).filter(k => u.friends[k].status === 'accepted').length : 0;
+        const email = u.email || '—';
+
+        if (cols === 'full') return `
+            <tr>
+                <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                <td>${email}</td>
+                <td><span class="status-pill ${st.cls}">${st.label}</span></td>
+                <td>
+                    <span class="badge-small">🤝 ${badges.manner||0}</span>
+                    <span class="badge-small">🧠 ${badges.logic||0}</span>
+                    <span class="badge-small">😄 ${badges.humor||0}</span>
+                </td>
+                <td>${friendCount}명</td>
+                <td><button class="action-btn btn-view" onclick="openUserModal('${uid}')">상세</button></td>
+            </tr>`;
+
+        if (cols === 'banned') return `
+            <tr>
+                <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                <td>${email}</td>
+                <td>
+                    <span class="badge-small">🤝 ${badges.manner||0}</span>
+                    <span class="badge-small">🧠 ${badges.logic||0}</span>
+                </td>
+                <td>
+                    <button class="action-btn btn-restore" onclick="quickAction('${uid}','restore')">✅ 해제</button>
+                    <button class="action-btn btn-view" onclick="openUserModal('${uid}')">상세</button>
+                </td>
+            </tr>`;
+
+        if (cols === 'suspended') return `
+            <tr>
+                <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                <td>${email}</td>
+                <td>${fmtDate(u.suspendedUntil)}</td>
+                <td>${u.suspendReason || '—'}</td>
+                <td>
+                    <button class="action-btn btn-restore" onclick="quickAction('${uid}','restore')">✅ 해제</button>
+                    <button class="action-btn btn-ban" onclick="quickAction('${uid}','ban')">🚫 영구정지</button>
+                </td>
+            </tr>`;
+
+        if (cols === 'warned') return `
+            <tr>
+                <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                <td>${email}</td>
+                <td>${fmtDate(u.warnedAt)}</td>
+                <td>
+                    <button class="action-btn btn-suspend" onclick="quickAction('${uid}','suspend')">⏸ 정지</button>
+                    <button class="action-btn btn-ban" onclick="quickAction('${uid}','ban')">🚫 영구정지</button>
+                    <button class="action-btn btn-restore" onclick="quickAction('${uid}','restore')">✅ 해제</button>
+                </td>
+            </tr>`;
+
+        if (cols === 'dash') return `
+            <tr>
+                <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                <td>${email}</td>
+                <td><span class="status-pill ${st.cls}">${st.label}</span></td>
+                <td>
+                    <span class="badge-small">🤝 ${badges.manner||0}</span>
+                    <span class="badge-small">🧠 ${badges.logic||0}</span>
+                </td>
+                <td><button class="action-btn btn-view" onclick="openUserModal('${uid}')">상세</button></td>
+            </tr>`;
+    }
+
+    // ── 렌더 ──
+    function renderDashboard() {
+        // 최근 10명
+        const entries = Object.entries(allUsers).slice(0, 10);
+        const tbody = document.getElementById('dash-user-list');
+        tbody.innerHTML = entries.length
+            ? entries.map(([uid, u]) => userRow(uid, u, 'dash')).join('')
+            : '<tr class="empty-row"><td colspan="5">회원 없음</td></tr>';
+
+        // 미처리 이의신청 (최대 3건)
+        const container = document.getElementById('dash-appeals');
+        const appeals = Object.entries(allAppeals).slice(0, 3);
+        container.innerHTML = appeals.length
+            ? appeals.map(([uid, a]) => appealCard(uid, a)).join('')
+            : '<div style="color:var(--text-dim);font-size:13px;padding:12px 0;">미처리 이의신청 없음</div>';
+    }
+
+    function renderUserList() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const entries = Object.entries(allUsers).filter(([uid, u]) =>
+            !query || uid.toLowerCase().includes(query) || (u.email||'').toLowerCase().includes(query)
+        );
+        document.getElementById('users-count').textContent = `${entries.length}명`;
+        const tbody = document.getElementById('user-list');
+        tbody.innerHTML = entries.length
+            ? entries.map(([uid, u]) => userRow(uid, u, 'full')).join('')
+            : '<tr class="empty-row"><td colspan="6">결과 없음</td></tr>';
+    }
+
+    function renderBannedLists() {
+        const entries = Object.entries(allUsers);
+
+        const banned = entries.filter(([,u]) => u.banned);
+        document.getElementById('banned-list').innerHTML = banned.length
+            ? banned.map(([uid,u]) => userRow(uid,u,'banned')).join('')
+            : '<tr class="empty-row"><td colspan="4">없음</td></tr>';
+
+        const suspended = entries.filter(([,u]) => u.suspendedUntil && u.suspendedUntil > Date.now() && !u.banned);
+        document.getElementById('suspended-list').innerHTML = suspended.length
+            ? suspended.map(([uid,u]) => userRow(uid,u,'suspended')).join('')
+            : '<tr class="empty-row"><td colspan="5">없음</td></tr>';
+
+        const warned = entries.filter(([,u]) => u.warnedAt && !u.banned);
+        document.getElementById('warned-list').innerHTML = warned.length
+            ? warned.map(([uid,u]) => userRow(uid,u,'warned')).join('')
+            : '<tr class="empty-row"><td colspan="4">없음</td></tr>';
+    }
+
+    function renderReportList() {
+        const entries = Object.entries(allReports);
+        document.getElementById('reports-count').textContent = `${entries.length}건`;
+        const tbody = document.getElementById('report-list');
+        tbody.innerHTML = entries.length ? entries.map(([id, r]) => `
+            <tr>
+                <td class="uid-cell" title="${r.reporterUid||''}">${(r.reporterUid||'—').substring(0,10)}...</td>
+                <td class="uid-cell" title="${r.reportedUid||''}">${(r.reportedUid||'—').substring(0,10)}...</td>
+                <td style="font-size:11px;color:var(--text-dim)">${r.channel||'—'}</td>
+                <td>${fmtDate(r.submittedAt||r.timestamp)}</td>
+                <td><span class="status-pill ${r.resolved ? 'pill-normal' : 'pill-pending'}">${r.resolved ? '처리됨' : '미처리'}</span></td>
+                <td>
+                    <button class="action-btn btn-view" onclick="openUserModal('${r.reportedUid}')">피신고자</button>
+                    <button class="action-btn btn-restore" onclick="resolveReport('${id}')">처리완료</button>
+                </td>
+            </tr>`).join('')
+            : '<tr class="empty-row"><td colspan="6">신고 내역 없음</td></tr>';
+    }
+
+    function appealCard(uid, a) {
+        const typeCls = a.type === 'ban' ? 'type-ban' : 'type-suspend';
+        const typeLabel = a.type === 'ban' ? '영구정지' : '일시정지';
+        return `
+        <div class="appeal-card">
+            <div class="appeal-meta">
+                <span class="appeal-uid">UID: ${uid}</span>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="appeal-type ${typeCls}">${typeLabel} 이의신청</span>
+                    <span class="appeal-date">${fmtDate(a.submittedAt)}</span>
+                </div>
+            </div>
+            <div class="appeal-text">${a.text || '내용 없음'}</div>
+            <div class="appeal-actions">
+                <button class="action-btn btn-restore" onclick="acceptAppeal('${uid}','${a.type}')">✅ 이의신청 수락 (제재 해제)</button>
+                <button class="action-btn btn-suspend" onclick="rejectAppeal('${uid}')">❌ 기각</button>
+                <button class="action-btn btn-view" onclick="openUserModal('${uid}')">유저 상세</button>
+            </div>
+        </div>`;
+    }
+
+    function renderAppeals() {
+        const entries = Object.entries(allAppeals);
+        document.getElementById('appeals-count').textContent = `${entries.length}건`;
+        document.getElementById('appeals-list').innerHTML = entries.length
+            ? entries.map(([uid, a]) => appealCard(uid, a)).join('')
+            : '<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px;">이의신청 없음</div>';
+    }
+
+    // ── 네비게이션 ──
+    function navigate(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+        event.currentTarget.classList.add('active');
+        currentPage = page;
+        const titles = { dashboard:'대시보드', users:'전체 회원', banned:'정지·차단 회원', reports:'신고 내역', appeals:'이의신청' };
+        document.getElementById('page-title').textContent = titles[page] || page;
+    }
+
+    function switchTab(page, tabId) {
+        document.querySelectorAll(`#page-${page} .tab-content`).forEach(t => t.style.display = 'none');
+        document.querySelectorAll(`#page-${page} .tab`).forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
+    function onSearch() { if (currentPage === 'users') renderUserList(); }
+
+    // ── 유저 상세 모달 ──
+    function openUserModal(uid) {
+        const u = allUsers[uid] || {};
+        const st = getUserStatus(u);
+        const badges = u.badges || {};
+        const friends = u.friends ? Object.entries(u.friends).filter(([,v])=>v.status==='accepted').length : 0;
+
+        document.getElementById('modal-title').textContent = '회원 상세';
+        document.getElementById('modal-uid').textContent = `UID: ${uid}`;
+        document.getElementById('modal-detail-grid').innerHTML = `
+            <div class="detail-item"><div class="detail-key">이메일</div><div class="detail-val">${u.email||'—'}</div></div>
+            <div class="detail-item"><div class="detail-key">상태</div><div class="detail-val"><span class="status-pill ${st.cls}">${st.label}</span></div></div>
+            <div class="detail-item"><div class="detail-key">매너 배지</div><div class="detail-val">🤝 ${badges.manner||0}</div></div>
+            <div class="detail-item"><div class="detail-key">논리 배지</div><div class="detail-val">🧠 ${badges.logic||0}</div></div>
+            <div class="detail-item"><div class="detail-key">유머 배지</div><div class="detail-val">😄 ${badges.humor||0}</div></div>
+            <div class="detail-item"><div class="detail-key">친구 수</div><div class="detail-val">${friends}명</div></div>
+            <div class="detail-item"><div class="detail-key">경고일</div><div class="detail-val">${fmtDate(u.warnedAt)}</div></div>
+            <div class="detail-item"><div class="detail-key">정지 해제일</div><div class="detail-val">${fmtDate(u.suspendedUntil)}</div></div>
+            ${u.suspendReason ? `<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">정지 사유</div><div class="detail-val">${u.suspendReason}</div></div>` : ''}
+        `;
+        currentTargetUid = uid;
+        document.getElementById('user-modal').classList.add('open');
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // ── 액션 ──
+    function modalAction(action) {
+        closeModal('user-modal');
+        quickAction(currentTargetUid, action);
+    }
+
+    function quickAction(uid, action) {
+        currentTargetUid = uid;
+        currentAction = action;
+        const labels = { warn:'⚠️ 경고 발송', suspend:'⏸ 일시 정지', ban:'🚫 영구 정지', restore:'✅ 제재 해제' };
+        const subs = {
+            warn: `UID ${uid.substring(0,12)}... 에게 경고를 발송합니다.`,
+            suspend: `UID ${uid.substring(0,12)}... 를 일시 정지합니다.`,
+            ban: `UID ${uid.substring(0,12)}... 를 영구 정지합니다. 이 작업은 되돌리기 전까지 지속됩니다.`,
+            restore: `UID ${uid.substring(0,12)}... 의 모든 제재를 해제합니다.`
+        };
+        const btnCls = { warn:'btn-confirm-warn', suspend:'btn-confirm-danger', ban:'btn-confirm-danger', restore:'btn-confirm-restore' };
+
+        document.getElementById('action-modal-title').textContent = labels[action];
+        document.getElementById('action-modal-sub').textContent = subs[action];
+
+        let extra = '';
+        if (action === 'suspend') {
+            extra = `
+                <label>정지 기간</label>
+                <select id="suspend-hours">
+                    <option value="24">24시간</option>
+                    <option value="72">72시간 (3일)</option>
+                    <option value="168">168시간 (7일)</option>
+                </select>
+                <label style="margin-top:10px;">사유</label>
+                <textarea id="suspend-reason" placeholder="정지 사유를 입력하세요"></textarea>`;
+        }
+        document.getElementById('action-extra').innerHTML = extra;
+
+        const confirmBtn = document.getElementById('action-confirm-btn');
+        confirmBtn.textContent = labels[action];
+        confirmBtn.className = btnCls[action];
+        document.getElementById('action-modal').classList.add('open');
+    }
+
+    async function executeAction() {
+        if (!currentTargetUid || !currentAction) return;
+        const uid = currentTargetUid;
+        const ref = db.ref(`users/${uid}`);
+        try {
+            if (currentAction === 'warn') {
+                await ref.update({ warnedAt: Date.now() });
+            } else if (currentAction === 'suspend') {
+                const hours = parseInt(document.getElementById('suspend-hours').value);
+                const reason = document.getElementById('suspend-reason').value || '규정 위반';
+                await ref.update({
+                    suspendedUntil: Date.now() + hours * 3600000,
+                    suspendReason: reason,
+                    warnedAt: null
+                });
+            } else if (currentAction === 'ban') {
+                await ref.update({ banned: true, suspendedUntil: null, warnedAt: null });
+            } else if (currentAction === 'restore') {
+                await ref.update({ banned: false, suspendedUntil: null, warnedAt: null, suspendReason: null });
+            }
+            closeModal('action-modal');
+            await loadUsers();
+        } catch(e) {
+            alert('오류: ' + e.message);
+        }
+    }
+
+    async function resolveReport(id) {
+        await db.ref(`reports/${id}`).update({ resolved: true });
+        await loadReports();
+    }
+
+    async function acceptAppeal(uid, type) {
+        await db.ref(`users/${uid}`).update({ banned: false, suspendedUntil: null, warnedAt: null, suspendReason: null });
+        await db.ref(`appeals/${uid}`).remove();
+        await loadAll();
+    }
+
+    async function rejectAppeal(uid) {
+        await db.ref(`appeals/${uid}`).remove();
+        await loadAppeals();
+    }
+</script>
+</body>
+</html>
