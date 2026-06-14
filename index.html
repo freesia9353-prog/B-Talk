@@ -847,24 +847,44 @@
     let selectedVoteTarget = null;
     let selectedReportTarget = null;
 
-    // 동물 닉네임 시스템
+    // 동물 닉네임 시스템 — UID 해시 기반으로 결정론적 배정 (어느 기기에서 봐도 동일)
     const ANIMALS = [
         { emoji: "🦊", name: "여우" }, { emoji: "🐻", name: "곰" },
         { emoji: "🐯", name: "호랑이" }, { emoji: "🐧", name: "펭귄" },
         { emoji: "🦁", name: "사자" }, { emoji: "🐸", name: "개구리" },
         { emoji: "🐨", name: "코알라" }, { emoji: "🐺", name: "늑대" },
         { emoji: "🦝", name: "너구리" }, { emoji: "🐮", name: "소" },
+        { emoji: "🐼", name: "판다" }, { emoji: "🦄", name: "유니콘" },
+        { emoji: "🐬", name: "돌고래" }, { emoji: "🦋", name: "나비" },
+        { emoji: "🦊", name: "여우" }, { emoji: "🐙", name: "문어" },
     ];
-    const COLORS = ["파란", "빨간", "초록", "보라", "노란", "주황", "하얀", "검정"];
-    let uidToAnimal = {}; // uid → { emoji, label } 매핑
-    let animalIndex = 0;
+    const COLORS = ["파란", "빨간", "초록", "보라", "노란", "주황", "하늘", "민트", "분홍", "하얀"];
+    let uidToAnimal = {};
+
+    // UID 문자열을 숫자로 해시 → 항상 같은 UID = 항상 같은 동물
+    function hashUid(uid) {
+        let hash = 0;
+        for (let i = 0; i < uid.length; i++) {
+            hash = (hash * 31 + uid.charCodeAt(i)) >>> 0;
+        }
+        return hash;
+    }
 
     function assignAnimal(uid) {
         if (uidToAnimal[uid]) return uidToAnimal[uid];
-        const animal = ANIMALS[animalIndex % ANIMALS.length];
-        const color = COLORS[animalIndex % COLORS.length];
-        uidToAnimal[uid] = { emoji: animal.emoji, label: `${color} ${animal.name}` };
-        animalIndex++;
+        const hash = hashUid(String(uid));
+        const animal = ANIMALS[hash % ANIMALS.length];
+        const color = COLORS[(hash >>> 4) % COLORS.length];
+        // 색+동물 조합이 겹치지 않도록 이미 쓴 조합이면 색 인덱스를 shift
+        const label0 = `${color} ${animal.name}`;
+        const usedLabels = Object.values(uidToAnimal).map(a => a.label);
+        let finalColor = color;
+        let shift = 0;
+        while (usedLabels.includes(`${finalColor} ${animal.name}`) && shift < COLORS.length) {
+            shift++;
+            finalColor = COLORS[(((hash >>> 4) % COLORS.length) + shift) % COLORS.length];
+        }
+        uidToAnimal[uid] = { emoji: animal.emoji, label: `${finalColor} ${animal.name}` };
         return uidToAnimal[uid];
     }
 
@@ -1603,23 +1623,14 @@
             sessionParticipants = [];
             agoraToFirebaseUid = {};
             uidToAnimal = {};
-            animalIndex = 0;
 
-            // 내 동물은 별도로 고정 배정 (animalIndex 소비 안 함 — 상대방 슬롯과 겹치지 않게)
-            const MY_ANIMALS = [
-                { emoji: "🐼", name: "판다" }, { emoji: "🦄", name: "유니콘" },
-                { emoji: "🐬", name: "돌고래" }, { emoji: "🦋", name: "나비" },
-            ];
-            const myAnimalBase = MY_ANIMALS[Math.floor(Math.random() * MY_ANIMALS.length)];
-            const myColorList = ["보라", "분홍", "하늘", "민트"];
-            const myColor = myColorList[Math.floor(Math.random() * myColorList.length)];
-            const myAnimal = { emoji: myAnimalBase.emoji, label: `${myColor} ${myAnimalBase.name}` };
-            uidToAnimal[myUid] = myAnimal;
-
-            // 내 동물 표시 + 입장 알림
+            // 내 동물 배정 (UID 해시 기반 — 항상 동일한 동물로 고정)
+            const myAnimal = assignAnimal(myUid);
             document.getElementById('my-animal-label').innerText = `${myAnimal.emoji} ${myAnimal.label}`;
             document.getElementById('my-animal-tag').style.display = "block";
-            alert(`${currentLang === 'ko' ? `🐾 당신은 오늘 [${myAnimal.emoji} ${myAnimal.label}]입니다!\n상대방도 고유한 동물로 표시됩니다.` : `🐾 You are [${myAnimal.emoji} ${myAnimal.label}] today!\nPeers will also have unique animal names.`}`);
+            alert(currentLang === 'ko'
+                ? `🐾 당신은 오늘 [${myAnimal.emoji} ${myAnimal.label}]입니다!\n상대방도 고유한 동물로 표시됩니다.`
+                : `🐾 You are [${myAnimal.emoji} ${myAnimal.label}] today!\nPeers will also have unique animal names.`);
 
             // 내 Agora UID → Firebase UID 매핑을 채널 경로에 등록 (상대방이 참조용)
             if (firebaseUser) {
@@ -1867,7 +1878,6 @@
 
             // 모달 렌더 후 동물 맵 초기화
             uidToAnimal = {};
-            animalIndex = 0;
 
         } catch (error) { console.error("Error occurred while leaving room:", error); }
     };
