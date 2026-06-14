@@ -1892,6 +1892,41 @@
         } catch (error) { console.error("Error occurred while leaving room:", error); }
     };
 
+    // AI 대화 요약 함수 — summarize.js Netlify Function 호출
+    async function requestAISummary() {
+        try {
+            const fullBlob = new Blob(audioSlices, { type: 'audio/webm' });
+            if (fullBlob.size === 0) {
+                document.getElementById('summary-headline').innerText = textData[currentLang].aiHeadline;
+                document.getElementById('summary-content').innerHTML = textData[currentLang].aiSample;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audioData', fullBlob);
+            formData.append('lang', currentLang);
+
+            const res = await fetch('/.netlify/functions/summarize', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error('summarize API error');
+            const data = await res.json();
+            const summary = data.summary || '';
+
+            document.getElementById('summary-headline').innerText = textData[currentLang].aiHeadline;
+            document.getElementById('summary-content').innerHTML = summary
+                .split('\n').filter(Boolean)
+                .map(line => `• ${line}`).join('<br>');
+
+        } catch (e) {
+            console.error('AI summary failed:', e);
+            document.getElementById('summary-headline').innerText = textData[currentLang].aiHeadline;
+            document.getElementById('summary-content').innerHTML = textData[currentLang].aiSample;
+        }
+    }
+
     function setupVoteTargetsUI() {
         const container = document.getElementById('vote-target-container');
         container.innerHTML = "";
@@ -1930,12 +1965,14 @@
         if (!selectedVoteTarget) return;
 
         try {
-            // 1. KVDB 시그널링 전송 (상대방 브라우저 알림 인터셉터 트리거 발송)
-            await fetch(`${SIGNAL_SERVER_URL}${currentChannelName}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ badgeType, targetUid: String(selectedVoteTarget), senderId: String(myUid), timestamp: Date.now() })
-            });
+            // 1. KVDB 시그널링 전송 (상대방 실시간 알림용 — 실패해도 배지 전달엔 영향 없음)
+            try {
+                await fetch(`${SIGNAL_SERVER_URL}${currentChannelName}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ badgeType, targetUid: String(selectedVoteTarget), senderId: String(myUid), timestamp: Date.now() })
+                });
+            } catch(e) {} // KVDB 실패 무시
 
             // 2. Firebase Database 트랜잭션 원자적 연산 - 상대방 UID에 점수 다이렉트 누적 처리
             const targetBadgeRef = database.ref('users/' + selectedVoteTarget + '/badges/' + badgeType);
