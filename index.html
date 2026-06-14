@@ -808,6 +808,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         </div>
 
         <div id="matching-status"></div>
+        <div id="debug-log" style="font-size:11px;color:#ff6b6b;margin-top:8px;word-break:break-all;max-width:100%;text-align:left;padding:0 10px;"></div>
 
         <div class="select-group" id="max-people-group">
             <label for="max-people-select" id="maxpeople">Max People:</label>
@@ -1775,13 +1776,17 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
         document.getElementById('channel-debug').innerText = `Channel Name: ${currentChannelName}`;
 
+        const dbg = (msg) => { document.getElementById('debug-log').innerText += msg + '\n'; };
         try {
+            dbg('1. 시작');
             // iOS Safari 포함 모든 브라우저: getUserMedia로 먼저 권한 확보
             try {
+                dbg('2. getUserMedia 시도');
                 const testStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                // 권한 확보 후 트랙 즉시 중지 (Agora가 다시 열 것임)
+                dbg('3. getUserMedia 성공');
                 testStream.getTracks().forEach(t => t.stop());
             } catch(permErr) {
+                dbg('마이크 권한 실패: ' + permErr.message);
                 alert(currentLang === 'ko'
                     ? '마이크 권한을 허용해 주세요.'
                     : 'Please allow microphone access.');
@@ -1789,8 +1794,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
                 document.getElementById('join-btn').disabled = false;
                 return;
             }
+            dbg('4. Agora 마이크 트랙 생성 시도');
             // 권한 확보 후 Agora로 마이크 트랙 생성
             localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            dbg('5. 마이크 트랙 생성 성공');
 
             const firebaseUser = auth.currentUser;
             const agoraUid = firebaseUser ? firebaseUser.uid : null;
@@ -1852,6 +1859,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             isJoining = false;
 
         } catch (error) {
+            document.getElementById('debug-log').innerText += '❌ 에러: ' + error.message + '\n';
             console.error("Agora room entry crashed:", error);
             // 🚨 [수정] 실패 시 Agora 연결을 깨끗이 정리 (이걸 안 하면 다음 시도 때 "already connected" 에러 발생)
             try {
