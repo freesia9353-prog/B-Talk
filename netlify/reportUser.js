@@ -4,11 +4,10 @@ const Busboy = require('busboy');
 
 // Firebase Admin 초기화 (서버당 1번만)
 if (!admin.apps.length) {
-    // Netlify 환경변수에 저장해둔 Firebase 서비스 어카운트 JSON을 불러옵니다.
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL: "https://b-talk-login-default-rtdb.firebaseio.com/" // 본인의 DB URL
+        databaseURL: "https://b-talk-login-default-rtdb.firebaseio.com/"
     });
 }
 
@@ -24,14 +23,10 @@ exports.handler = async function(event, context) {
         let fields = {};
 
         busboy.on('file', (name, file, info) => {
-            file.on('data', (data) => {
-                audioBuffer.push(data);
-            });
+            file.on('data', (data) => { audioBuffer.push(data); });
         });
 
-        busboy.on('field', (name, value) => {
-            fields[name] = value;
-        });
+        busboy.on('field', (name, value) => { fields[name] = value; });
 
         busboy.on('finish', async () => {
             try {
@@ -42,16 +37,14 @@ exports.handler = async function(event, context) {
                     return resolve({ statusCode: 400, body: 'Missing audio or UID' });
                 }
 
-                // 1. Gemini AI로 오디오 파일 전송 및 유해성 검사
+                // 1. Gemini AI 유해성 검사
                 const prompt = `
                 첨부된 오디오 파일은 익명 음성 채팅방의 대화 내용 1분입니다.
                 이 음성 내용 중에 심한 욕설, 성희롱, 차별적 혐오 발언, 또는 심각한 범죄 모의 내용이 포함되어 있는지 판별하세요.
                 결과를 JSON 형식으로만 반환하세요: {"isToxic": true/false, "reason": "간단한 이유"}
                 `;
 
-                // Base64로 변환하여 모델에 전달
                 const base64Audio = finalAudioBuffer.toString('base64');
-                
                 const response = await ai.models.generateContent({
                     model: 'gemini-2.5-flash',
                     contents: [
@@ -63,10 +56,46 @@ exports.handler = async function(event, context) {
 
                 const result = JSON.parse(response.text);
 
-                // 2. 유해성이 감지되면 Firebase DB에 banned: true 기록
+                // 2. 유해성 감지 시 3단계 제재 처리
                 if (result.isToxic) {
-                    console.log(`[BAN EXECUTED] User: ${reportedUid}, Reason: ${result.reason}`);
-                    await db.ref('users/' + reportedUid).update({ banned: true });
+                    const userRef = db.ref('users/' + reportedUid);
+                    const snapshot = await userRef.once('value');
+                    const userData = snapshot.val() || {};
+
+                    const reportCount = (userData.reportCount || 0) + 1;
+                    const now = Date.now();
+
+                    console.log(`[REPORT] User: ${reportedUid}, Count: ${reportCount}, Reason: ${result.reason}`);
+
+                    if (reportCount === 1) {
+                        // 1단계: 경고
+                        await userRef.update({
+                            reportCount,
+                            warnedAt: now,
+                            lastReportReason: result.reason
+                        });
+                        console.log(`[WARN] User: ${reportedUid}`);
+
+                    } else if (reportCount === 2) {
+                        // 2단계: 24시간 정지
+                        await userRef.update({
+                            reportCount,
+                            suspendedUntil: now + 24 * 60 * 60 * 1000, // 24시간 후
+                            suspendReason: result.reason,
+                            lastReportReason: result.reason
+                        });
+                        console.log(`[SUSPEND 24H] User: ${reportedUid}`);
+
+                    } else {
+                        // 3단계: 영구정지 (3회 이상)
+                        await userRef.update({
+                            reportCount,
+                            banned: true,
+                            bannedAt: now,
+                            banReason: result.reason
+                        });
+                        console.log(`[BAN PERMANENT] User: ${reportedUid}`);
+                    }
                 }
 
                 resolve({
@@ -80,7 +109,6 @@ exports.handler = async function(event, context) {
             }
         });
 
-        // Netlify Functions의 body는 base64로 인코딩되어 들어오므로 디코딩하여 busboy에 주입
         busboy.write(Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8'));
         busboy.end();
     });

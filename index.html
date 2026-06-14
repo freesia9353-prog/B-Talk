@@ -963,6 +963,7 @@
 
                 // 영구정지 체크
                 if (userData.banned === true) {
+                    sessionStorage.setItem('bannedUid', user.uid); // 이의신청용 UID 저장
                     document.getElementById("ban-overlay").style.display = "flex";
                     auth.signOut();
                     return;
@@ -970,6 +971,7 @@
 
                 // 24시간 정지 체크
                 if (userData.suspendedUntil && userData.suspendedUntil > Date.now()) {
+                    sessionStorage.setItem('suspendedUid', user.uid); // 이의신청용 UID 저장
                     showSuspendOverlay(userData.suspendedUntil, userData.suspendReason, user.uid);
                     auth.signOut();
                     return;
@@ -1513,7 +1515,7 @@
             finalTopic = rawTopic; // 친구 1:1 방은 AI를 거치지 않고 다이렉트 패스
             document.getElementById('matching-status').innerText = (currentLang === 'ko') ? "🔒 1:1 비밀 채널 개설 완료!" : "🔒 Private Channel Connected!";
         } else {
-            finalTopic = await getAIMatchedTopic(rawTopic); // 일반 주제는 기존처럼 AI 매칭
+            finalTopic = await getAIMatchedTopic(rawTopic); // AI가 유사어를 동일 키워드로 정규화
         }
         
         // 💡 UI 표시용 한글 채널 이름 설정
@@ -2097,6 +2099,40 @@ async function connectToFriend(friendUid) {
     const topicInput = document.getElementById('topic-input');
     topicInput.value = privateChannelId;
     document.getElementById('join-btn').click();
+}
+
+// ── 영구정지 이의신청 제출 ──
+async function submitAppeal() {
+    const uid = sessionStorage.getItem('bannedUid');
+    const text = document.getElementById('appeal-textarea').value.trim();
+    if (!text) { alert('이의신청 내용을 입력해 주세요.'); return; }
+    try {
+        await database.ref(`appeals/${uid || 'unknown'}`).set({
+            type: 'ban', text, submittedAt: Date.now()
+        });
+        document.getElementById('appeal-form-wrap').style.display = 'none';
+        document.getElementById('appeal-done-msg').style.display = 'block';
+    } catch(e) {
+        alert('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        console.error('Appeal submit failed:', e);
+    }
+}
+
+// ── 24시간 정지 이의신청 제출 ──
+async function submitSuspendAppeal() {
+    const uid = sessionStorage.getItem('suspendedUid');
+    const text = document.getElementById('suspend-appeal-textarea').value.trim();
+    if (!text) { alert('이의신청 내용을 입력해 주세요.'); return; }
+    try {
+        await database.ref(`appeals/${uid || 'unknown'}`).set({
+            type: 'suspend', text, submittedAt: Date.now()
+        });
+        document.getElementById('suspend-appeal-done').style.display = 'block';
+        document.getElementById('suspend-appeal-textarea').disabled = true;
+    } catch(e) {
+        alert('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        console.error('Suspend appeal submit failed:', e);
+    }
 }
 </script>
 </body>
