@@ -1792,7 +1792,6 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             const nativeTrack = nativeStream.getAudioTracks()[0];
             localAudioTrack = AgoraRTC.createCustomAudioTrack({ mediaStreamTrack: nativeTrack });
 
-            client.setClientRole("host");
             const firebaseUser = auth.currentUser;
             const agoraUid = firebaseUser ? firebaseUser.uid : null;
 
