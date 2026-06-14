@@ -519,6 +519,45 @@
 }
 .friend-edit-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
 .friend-action-group { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+/* 동물 닉네임 참여자 카드 */
+.part-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    transition: all 0.2s ease;
+    margin-bottom: 6px;
+}
+.part-item .animal-avatar { font-size: 22px; line-height: 1; transition: transform 0.15s ease; }
+.part-item .animal-name { font-weight: 500; letter-spacing: 0.3px; }
+.part-item.speaking {
+    border-color: var(--accent-color);
+    background: rgba(0, 229, 255, 0.07);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.18);
+    color: #fff;
+}
+.part-item.speaking .animal-avatar { animation: pulse-avatar 0.6s ease infinite alternate; }
+@keyframes pulse-avatar {
+    from { transform: scale(1.1); }
+    to   { transform: scale(1.3); }
+}
+.part-item .speaking-bar { margin-left: auto; display: flex; align-items: center; gap: 2px; opacity: 0; transition: opacity 0.2s; }
+.part-item.speaking .speaking-bar { opacity: 1; }
+.speaking-bar span { display: inline-block; width: 3px; background: var(--accent-color); border-radius: 2px; animation: bar-bounce 0.5s ease infinite alternate; }
+.speaking-bar span:nth-child(1) { height: 6px;  animation-delay: 0s;   }
+.speaking-bar span:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+.speaking-bar span:nth-child(3) { height: 8px;  animation-delay: 0.2s; }
+.speaking-bar span:nth-child(4) { height: 14px; animation-delay: 0.05s;}
+@keyframes bar-bounce {
+    from { transform: scaleY(0.5); }
+    to   { transform: scaleY(1.2); }
+}
     </style>
 </head>
 <body>
@@ -803,6 +842,27 @@
     let agoraToFirebaseUid = {}; // Agora UID → Firebase UID 매핑 테이블
     let selectedVoteTarget = null;
     let selectedReportTarget = null;
+
+    // 동물 닉네임 시스템
+    const ANIMALS = [
+        { emoji: "🦊", name: "여우" }, { emoji: "🐻", name: "곰" },
+        { emoji: "🐯", name: "호랑이" }, { emoji: "🐧", name: "펭귄" },
+        { emoji: "🦁", name: "사자" }, { emoji: "🐸", name: "개구리" },
+        { emoji: "🐨", name: "코알라" }, { emoji: "🐺", name: "늑대" },
+        { emoji: "🦝", name: "너구리" }, { emoji: "🐮", name: "소" },
+    ];
+    const COLORS = ["파란", "빨간", "초록", "보라", "노란", "주황", "하얀", "검정"];
+    let uidToAnimal = {}; // uid → { emoji, label } 매핑
+    let animalIndex = 0;
+
+    function assignAnimal(uid) {
+        if (uidToAnimal[uid]) return uidToAnimal[uid];
+        const animal = ANIMALS[animalIndex % ANIMALS.length];
+        const color = COLORS[animalIndex % COLORS.length];
+        uidToAnimal[uid] = { emoji: animal.emoji, label: `${color} ${animal.name}` };
+        animalIndex++;
+        return uidToAnimal[uid];
+    }
 
     // 60초 롤링 녹음을 위한 Web Audio API 및 Buffer 오브젝트
     let audioCtx = null;
@@ -1553,6 +1613,7 @@
             // 오디오 보안 롤링 시스템 즉시 실행
             setupRollingAudioRecorder();
             startSignalPolling();
+            startVolumeIndicator(); // 발화자 감지 시작
 
             document.getElementById('join-btn').style.display = "none";
             document.getElementById('leave-btn').style.display = "inline-block";
@@ -1611,22 +1672,43 @@
         renderParticipantsUI();
     });
 
-    // 익명화된 참가자 리스트 UI 렌더링 (⚠️ 절대 삭제 금지 - 그대로 유지됨)
+    // 익명화된 참가자 리스트 UI 렌더링 (동물 닉네임 + 발화 감지)
     function renderParticipantsUI() {
         const container = document.getElementById('part-list-container');
         container.innerHTML = "";
-        
+
         if (roomParticipants.length === 0) {
             container.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.3); text-align:center; padding:10px;">Waiting for peers...</div>`;
             return;
         }
 
-        roomParticipants.forEach((uid, index) => {
+        roomParticipants.forEach((uid) => {
+            const animal = assignAnimal(uid);
             const el = document.createElement('div');
             el.className = "part-item";
             el.id = `part-${uid}`;
-            el.innerHTML = `👤 Participant ${index + 1}`;
+            el.innerHTML = `
+                <span class="animal-avatar">${animal.emoji}</span>
+                <span class="animal-name">${animal.label}</span>
+                <span class="speaking-bar">
+                    <span></span><span></span><span></span><span></span>
+                </span>`;
             container.appendChild(el);
+        });
+    }
+
+    // 볼륨 감지 → 발화자 카드 하이라이트
+    function startVolumeIndicator() {
+        client.enableAudioVolumeIndicator();
+        client.on("volume-indicator", (volumes) => {
+            // 모든 카드 speaking 클래스 제거
+            document.querySelectorAll('.part-item').forEach(el => el.classList.remove('speaking'));
+            volumes.forEach(({ uid, level }) => {
+                if (level > 25) { // 임계값: 25 이상이면 말하는 중으로 판단
+                    const el = document.getElementById(`part-${uid}`);
+                    if (el) el.classList.add('speaking');
+                }
+            });
         });
     }
 
@@ -1673,7 +1755,8 @@
         roomParticipants.forEach((uid, index) => {
             const btn = document.createElement('button');
             btn.className = "target-btn";
-            btn.innerText = `👤 Participant ${index + 1}`;
+            const animal = uidToAnimal[uid] || { emoji: "👤", label: `참여자 ${index + 1}` };
+            btn.innerText = `${animal.emoji} ${animal.label}`;
             btn.onclick = () => {
                 document.querySelectorAll('#report-target-container .target-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -1736,6 +1819,8 @@
             await client.leave();
 
             isJoined = false;
+            uidToAnimal = {}; // 동물 닉네임 초기화
+            animalIndex = 0;
             document.getElementById('join-btn').style.display = "block";
             document.getElementById('join-btn').disabled = false;
             document.getElementById('leave-btn').style.display = "none";
@@ -1777,7 +1862,8 @@
         sessionParticipants.forEach((uid, index) => {
             const btn = document.createElement('button');
             btn.className = "target-btn";
-            btn.innerText = `👤 Participant ${index + 1}`;
+            const animal = uidToAnimal[uid] || { emoji: "👤", label: `참여자 ${index + 1}` };
+            btn.innerText = `${animal.emoji} ${animal.label}`;
             btn.onclick = () => {
                 document.querySelectorAll('#vote-target-container .target-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');

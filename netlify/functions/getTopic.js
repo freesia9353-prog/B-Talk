@@ -1,10 +1,8 @@
 const { GoogleGenAI } = require('@google/genai');
 
-// 환경변수에서 API 키 로드
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 exports.handler = async function(event, context) {
-    // POST 요청만 허용
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
@@ -13,7 +11,6 @@ exports.handler = async function(event, context) {
         const body = JSON.parse(event.body);
         const userInput = body.userInput || "general";
 
-        // AI에게 지시할 프롬프트
         const prompt = `
 당신은 음성 채팅 앱의 주제 정규화 엔진입니다.
 사용자 입력: "${userInput}"
@@ -36,11 +33,12 @@ exports.handler = async function(event, context) {
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',  // ✅ 수정
             contents: prompt,
         });
 
-        const topic = response.text.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+        const raw = response.text();
+        const topic = raw.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
 
         return {
             statusCode: 200,
