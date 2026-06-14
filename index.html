@@ -1754,33 +1754,31 @@
         });
     }
 
-    // 8. 실시간 평판 시그널링 폴링 시스템 (KVDB)
+    // 8. 실시간 평판 시그널링 — Firebase Realtime Database 기반 (KVDB 대체)
+    let signalListenerRef = null;
+
     function startSignalPolling() {
-        if (signalTimer) clearInterval(signalTimer);
-        signalTimer = setInterval(async () => {
-            if (!isJoined || !currentChannelName) return;
-            try {
-                const res = await fetch(`${SIGNAL_SERVER_URL}${currentChannelName}`, { cache: 'no-store' });
-                if (res.status === 404) return; // 수신 신호 없음 — 정상, 무시
-                if (res.status === 200) {
-                    const data = await res.json();
-                    if (data && data.targetUid === String(myUid)) {
-                        const receivedMsg = data.badgeType;
-                        const badgeNames = {
-                            manner: currentLang === 'ko' ? "매너 좋음" : "Manners",
-                            logic: currentLang === 'ko' ? "논리적임" : "Logic",
-                            humor: currentLang === 'ko' ? "유머러스함" : "Humor"
-                        };
-                        alert(currentLang === 'ko'
-                            ? `✨ 다른 참여자가 나에게 [${badgeNames[receivedMsg]}] 배지를 선물했습니다!`
-                            : `✨ A peer has gifted you a [${badgeNames[receivedMsg]}] badge!`
-                        );
-                        // 수신 트래픽 정리용으로 키 제거 요청 처리
-                        try { await fetch(`${SIGNAL_SERVER_URL}${currentChannelName}`, { method: 'DELETE' }); } catch(e){}
-                    }
-                }
-            } catch (e) {}
-        }, 6000);
+        if (signalListenerRef) { signalListenerRef.off(); signalListenerRef = null; }
+        if (!myUid) return;
+
+        signalListenerRef = database.ref(`signals/${myUid}`);
+        signalListenerRef.on('value', async (snap) => {
+            if (!isJoined) return;
+            const data = snap.val();
+            if (!data) return;
+
+            const badgeNames = {
+                manner: currentLang === 'ko' ? "매너 좋음" : "Manners",
+                logic:  currentLang === 'ko' ? "논리적임" : "Logic",
+                humor:  currentLang === 'ko' ? "유머러스함" : "Humor"
+            };
+            alert(currentLang === 'ko'
+                ? `✨ 다른 참여자가 나에게 [${badgeNames[data.badgeType]}] 배지를 선물했습니다!`
+                : `✨ A peer has gifted you a [${badgeNames[data.badgeType]}] badge!`
+            );
+            // 수신 후 즉시 삭제
+            await database.ref(`signals/${myUid}`).remove();
+        });
     }
 
     // 9. 신고 모달 팝업 및 AI 1분 분석 유해 검사 제출 로직
@@ -1858,6 +1856,7 @@
         try {
             stopRollingAudioRecorder();
             if (signalTimer) { clearInterval(signalTimer); signalTimer = null; }
+            if (signalListenerRef) { signalListenerRef.off(); signalListenerRef = null; }
             if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); localAudioTrack = null; }
             await client.leave();
 
@@ -1965,14 +1964,14 @@
         if (!selectedVoteTarget) return;
 
         try {
-            // 1. KVDB 시그널링 전송 (상대방 실시간 알림용 — 실패해도 배지 전달엔 영향 없음)
+            // 1. Firebase로 배지 수신 알림 전송 (상대방 signals/{uid} 경로에 기록)
             try {
-                await fetch(`${SIGNAL_SERVER_URL}${currentChannelName}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ badgeType, targetUid: String(selectedVoteTarget), senderId: String(myUid), timestamp: Date.now() })
+                await database.ref(`signals/${selectedVoteTarget}`).set({
+                    badgeType,
+                    senderId: String(myUid),
+                    timestamp: Date.now()
                 });
-            } catch(e) {} // KVDB 실패 무시
+            } catch(e) { console.warn('Signal write failed:', e); }
 
             // 2. Firebase Database 트랜잭션 원자적 연산 - 상대방 UID에 점수 다이렉트 누적 처리
             const targetBadgeRef = database.ref('users/' + selectedVoteTarget + '/badges/' + badgeType);
