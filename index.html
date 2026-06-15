@@ -999,16 +999,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         const hash = hashUid(String(uid));
         const animal = ANIMALS[hash % ANIMALS.length];
         const color = COLORS[(hash >>> 4) % COLORS.length];
-        // 색+동물 조합이 겹치지 않도록 이미 쓴 조합이면 색 인덱스를 shift
-        const label0 = `${color} ${animal.name}`;
-        const usedLabels = Object.values(uidToAnimal).map(a => a.label);
-        let finalColor = color;
-        let shift = 0;
-        while (usedLabels.includes(`${finalColor} ${animal.name}`) && shift < COLORS.length) {
-            shift++;
-            finalColor = COLORS[(((hash >>> 4) % COLORS.length) + shift) % COLORS.length];
-        }
-        uidToAnimal[uid] = { emoji: animal.emoji, label: `${finalColor} ${animal.name}` };
+        uidToAnimal[uid] = { emoji: animal.emoji, label: `${color} ${animal.name}` };
         return uidToAnimal[uid];
     }
 
@@ -2198,6 +2189,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         sessionParticipants.forEach((uid, index) => {
             const btn = document.createElement('button');
             btn.className = "target-btn";
+            btn.dataset.uid = uid;
             const animal = uidToAnimal[uid] || { emoji: "👤", label: `참여자 ${index + 1}` };
             btn.innerText = `${animal.emoji} ${animal.label}`;
             btn.onclick = () => {
@@ -2208,6 +2200,20 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             };
             container.appendChild(btn);
         });
+    }
+
+    // 배지를 보낸 대상은 목록에서 제거하고, 다음 대상을 선택할 수 있도록 모달을 유지
+    function removeVoteTarget(uid) {
+        const btn = document.querySelector(`#vote-target-container .target-btn[data-uid="${uid}"]`);
+        if (btn) btn.remove();
+
+        selectedVoteTarget = null;
+        toggleVoteBadgeButtons(false);
+
+        const container = document.getElementById('vote-target-container');
+        if (container.children.length === 0) {
+            closeModal();
+        }
     }
 
     function toggleVoteBadgeButtons(enable) {
@@ -2237,11 +2243,11 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             });
 
             alert(textData[currentLang].badgeSuccess);
-            closeModal();
+            removeVoteTarget(selectedVoteTarget);
 
         } catch (err) {
             console.error("Firebase transaction processing failure:", err);
-            closeModal();
+            removeVoteTarget(selectedVoteTarget);
         }
     }
 
