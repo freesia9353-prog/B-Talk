@@ -1381,12 +1381,21 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('join-btn').innerText = isJoined ? lang.joinBtn : lang.startBtn;
     }
 
-    // 구글 로그인: 인앱 브라우저(카카오, 인스타 등) WebView에서 Popup이 차단되므로 Redirect 방식 사용
+    // 구글 로그인: 기본은 Popup 방식 (authDomain과 사이트 도메인이 달라도 안정적으로 동작).
+    // Popup이 차단되는 인앱 브라우저(카카오, 인스타 등) WebView에서는 Redirect로 자동 전환.
     document.getElementById('google-login-btn').addEventListener('click', () => {
-        auth.signInWithRedirect(provider).catch((error) => console.error(error));
+        auth.signInWithPopup(provider).catch((error) => {
+            if (error && (error.code === 'auth/popup-blocked' ||
+                          error.code === 'auth/operation-not-supported-in-this-environment' ||
+                          error.code === 'auth/popup-closed-by-user')) {
+                auth.signInWithRedirect(provider).catch((e) => console.error(e));
+            } else {
+                console.error(error);
+            }
+        });
     });
 
-    // 페이지 로드 시 Redirect 결과 처리 (리다이렉트 후 돌아왔을 때 자동 로그인 완료)
+    // 페이지 로드 시 Redirect 결과 처리 (Redirect 방식으로 로그인한 경우 돌아왔을 때 처리)
     auth.getRedirectResult().catch((error) => {
         if (error && error.code !== 'auth/no-current-user') {
             console.error('Redirect login error:', error);
