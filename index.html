@@ -1824,8 +1824,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             agoraToFirebaseUid = {};
             uidToAnimal = {};
 
-            // 내 동물 배정 (UID 해시 기반 — 항상 동일한 동물로 고정)
-            const myAnimal = assignAnimal(myUid);
+            // 내 동물 배정 (Firebase UID 해시 기반 — 상대방이 보는 내 동물과 항상 일치)
+            const myAnimal = assignAnimal(firebaseUser ? firebaseUser.uid : myUid);
             document.getElementById('my-animal-label').innerText = `${myAnimal.emoji} ${myAnimal.label}`;
             document.getElementById('my-animal-tag').style.display = "block";
             alert(currentLang === 'ko'
