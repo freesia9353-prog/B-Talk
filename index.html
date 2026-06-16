@@ -660,6 +660,162 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     from { transform: scaleY(0.5); }
     to   { transform: scaleY(1.2); }
 }
+
+        /* ── 대화방 입장 화면 ── */
+        #room-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-gradient);
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(30px);
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        #room-screen.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .room-header {
+            width: 100%;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 28px 24px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .room-header-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: rgba(255,255,255,0.35);
+        }
+        .room-topic-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-shadow: 0 0 24px rgba(0,229,255,0.4);
+            text-align: center;
+            letter-spacing: 0.5px;
+            max-width: 340px;
+            line-height: 1.3;
+        }
+        .room-body {
+            width: 100%;
+            max-width: 420px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+        .icebreaker-box {
+            background: rgba(0,229,255,0.05);
+            border: 1px solid rgba(0,229,255,0.18);
+            border-radius: 16px;
+            padding: 22px 20px 18px;
+            text-align: center;
+        }
+        .icebreaker-emoji {
+            font-size: 34px;
+            margin-bottom: 10px;
+            display: block;
+            animation: wave-hand 0.6s ease-in-out 0.8s 3;
+        }
+        @keyframes wave-hand {
+            0%,100% { transform: rotate(0deg); }
+            30%     { transform: rotate(-18deg); }
+            70%     { transform: rotate(18deg); }
+        }
+        .icebreaker-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(0,229,255,0.6);
+            margin-bottom: 8px;
+        }
+        .icebreaker-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.7;
+            margin-bottom: 6px;
+            white-space: pre-line;
+        }
+        .icebreaker-sub {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            line-height: 1.5;
+        }
+        .room-participants-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .room-part-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .room-part-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.38);
+        }
+        .room-part-count {
+            font-size: 11px;
+            color: rgba(0,229,255,0.6);
+            font-weight: 600;
+        }
+        .room-waiting {
+            font-size: 12px;
+            color: rgba(255,255,255,0.28);
+            text-align: center;
+            padding: 12px 0;
+        }
+        .room-footer {
+            width: 100%;
+            max-width: 420px;
+            padding: 12px 20px 36px;
+            display: flex;
+            gap: 10px;
+        }
+        .room-leave-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1px solid rgba(255,59,48,0.35);
+            color: var(--danger-color);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+        }
+        .room-leave-btn:hover { background: rgba(255,59,48,0.07); border-color: var(--danger-color); }
+        .room-report-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 10px;
+            background: rgba(255,149,0,0.08);
+            border: 1px solid rgba(255,149,0,0.28);
+            color: #ff9500;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+        }
+        .room-report-btn:hover { background: rgba(255,149,0,0.16); }
     </style>
 </head>
 <body>
@@ -916,6 +1072,34 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         </div>
     </div>
 
+
+    <!-- 대화방 입장 화면 -->
+    <div id="room-screen">
+        <div class="room-header">
+            <div class="room-header-label" id="room-header-label">대화 주제</div>
+            <div class="room-topic-display" id="room-topic-display">—</div>
+        </div>
+        <div class="room-body">
+            <div class="icebreaker-box">
+                <span class="icebreaker-emoji" id="icebreaker-emoji">👋</span>
+                <div class="icebreaker-label" id="icebreaker-label">아이스브레이킹 제안</div>
+                <div class="icebreaker-text" id="icebreaker-text">"만나서 반가워요!" 라고
+인사해보시겠어요?</div>
+                <div class="icebreaker-sub" id="icebreaker-sub">낯선 만남도 첫 인사 한 마디면 금방 가까워져요 😊</div>
+            </div>
+            <div class="room-participants-section">
+                <div class="room-part-header">
+                    <div class="room-part-title" id="room-part-title">참여자</div>
+                    <div class="room-part-count" id="room-part-count">나 포함 1명</div>
+                </div>
+                <div id="room-part-list"></div>
+            </div>
+        </div>
+        <div class="room-footer">
+            <button class="room-leave-btn" id="room-leave-btn">🚪 대화방 나가기</button>
+            <button class="room-report-btn" id="room-report-btn">🚨 신고하기</button>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="report-modal">
         <div class="modal-content">
@@ -1861,7 +2045,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             topicInput.disabled = true;
 
             renderParticipantsUI();
-            // 입장 알림은 동물 배정 alert로 대체됨
+            showRoomScreen(finalTopic);
 
             isJoining = false;
 
@@ -1979,18 +2163,92 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             el.appendChild(speakingBar);
             container.appendChild(el);
         });
+
+        // 룸 스크린 참여자 목록 동기화
+        updateRoomParticipants();
     }
+
+    // ── 대화방 화면 제어 ──
+    const ICEBREAKERS = {
+        ko: [
+            { emoji: "👋", text: '"만나서 반가워요!" 라고\n인사해보시겠어요?', sub: "낯선 만남도 첫 인사 한 마디면 금방 가까워져요 😊" },
+            { emoji: "😊", text: '"오늘 기분이 어떠세요?" 라고\n먼저 물어봐보세요!', sub: "상대방의 하루가 궁금하다는 표현, 참 따뜻하죠 ☀️" },
+            { emoji: "🌟", text: '"이 주제 어떻게 생각하세요?" 라고\n의견을 물어봐요!', sub: "서로의 생각을 나누는 순간, 대화가 깊어져요 💬" },
+            { emoji: "🎵", text: '"요즘 어떻게 지내세요?" 라고\n시작해보는 건 어떨까요?', sub: "가벼운 안부 한 마디로 분위기를 풀어봐요 🍀" },
+        ],
+        en: [
+            { emoji: "👋", text: 'Try saying\n"Nice to meet you!" first!', sub: "A warm greeting makes every new connection easier 😊" },
+            { emoji: "😊", text: 'How about asking\n"How\'s your day going?"', sub: "Showing curiosity about someone\'s day is a great start ☀️" },
+            { emoji: "🌟", text: 'Try "What do you think\nabout this topic?"', sub: "Sharing perspectives makes conversations richer 💬" },
+            { emoji: "🎵", text: 'Start with\n"How have you been lately?"', sub: "A simple check-in sets a friendly tone right away 🍀" },
+        ]
+    };
+
+    function showRoomScreen(topic) {
+        document.getElementById('room-topic-display').textContent = topic || '—';
+
+        const list = ICEBREAKERS[currentLang] || ICEBREAKERS.ko;
+        const pick = list[Math.floor(Math.random() * list.length)];
+        document.getElementById('icebreaker-emoji').textContent = pick.emoji;
+        document.getElementById('icebreaker-text').textContent = pick.text;
+        document.getElementById('icebreaker-sub').textContent = pick.sub;
+
+        const isKo = currentLang === 'ko';
+        document.getElementById('room-header-label').textContent = isKo ? '대화 주제' : 'Topic';
+        document.getElementById('icebreaker-label').textContent = isKo ? '아이스브레이킹 제안' : 'Icebreaker Tip';
+        document.getElementById('room-part-title').textContent = isKo ? '참여자' : 'Participants';
+        document.getElementById('room-leave-btn').textContent = isKo ? '🚪 대화방 나가기' : '🚪 Leave Room';
+        document.getElementById('room-report-btn').textContent = isKo ? '🚨 신고하기' : '🚨 Report';
+
+        updateRoomParticipants();
+        document.getElementById('room-screen').classList.add('active');
+    }
+
+    function hideRoomScreen() {
+        document.getElementById('room-screen').classList.remove('active');
+    }
+
+    function updateRoomParticipants() {
+        const list = document.getElementById('room-part-list');
+        const countEl = document.getElementById('room-part-count');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (roomParticipants.length === 0) {
+            list.innerHTML = `<div class="room-waiting">${currentLang === 'ko' ? '다른 참여자를 기다리는 중...' : 'Waiting for others...'}</div>`;
+        } else {
+            roomParticipants.forEach((uid) => {
+                const animal = assignAnimal(uid);
+                const el = document.createElement('div');
+                el.className = 'part-item';
+                el.id = `room-part-${uid}`;
+                el.innerHTML = `<span class="animal-avatar">${animal.emoji}</span><span class="animal-name">${animal.label}</span><span class="speaking-bar"><span></span><span></span><span></span><span></span></span>`;
+                list.appendChild(el);
+            });
+        }
+
+        const total = roomParticipants.length + 1;
+        countEl.textContent = currentLang === 'ko' ? `나 포함 ${total}명` : `${total} including you`;
+    }
+
+    document.getElementById('room-leave-btn').onclick = function() {
+        document.getElementById('leave-btn').click();
+    };
+    document.getElementById('room-report-btn').onclick = function() {
+        document.getElementById('report-btn').click();
+    };
 
     // 볼륨 감지 → 발화자 카드 하이라이트
     function startVolumeIndicator() {
         client.enableAudioVolumeIndicator();
         client.on("volume-indicator", (volumes) => {
-            // 모든 카드 speaking 클래스 제거
             document.querySelectorAll('.part-item').forEach(el => el.classList.remove('speaking'));
             volumes.forEach(({ uid, level }) => {
-                if (level > 25) { // 임계값: 25 이상이면 말하는 중으로 판단
+                if (level > 25) {
                     const el = document.getElementById(`part-${uid}`);
                     if (el) el.classList.add('speaking');
+                    const roomEl = document.getElementById(`room-part-${uid}`);
+                    if (roomEl) roomEl.classList.add('speaking');
                 }
             });
         });
@@ -2104,6 +2362,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
             isJoined = false;
             isJoining = false;
+            hideRoomScreen();
             document.getElementById('join-btn').style.display = "block";
             document.getElementById('join-btn').disabled = false;
             document.getElementById('leave-btn').style.display = "none";
@@ -2259,15 +2518,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     window.addEventListener('DOMContentLoaded', () => {
         updateUI();
 
-        // 🚨 [수정] 주제를 입력하면 '최대 인원' 선택란을 숨김 (입력 전/비었을 때만 표시)
-        const topicInputEl = document.getElementById('topic-input');
-        const maxGroupEl = document.getElementById('max-people-group');
-        if (topicInputEl && maxGroupEl) {
-            topicInputEl.addEventListener('input', () => {
-                if (isJoined || isJoining) return; // 통화 중/연결 중에는 어차피 숨김 상태 유지
-                maxGroupEl.style.display = topicInputEl.value.trim() ? "none" : "flex";
-            });
-        }
+        // 주제 입력과 무관하게 인원 선택창은 항상 표시
     });
 
     // 타임스탬프를 "YYYY.MM.DD" 포맷으로 변환하는 헬퍼 함수
