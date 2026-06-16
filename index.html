@@ -986,6 +986,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         </div>
 
         <button id="join-btn" disabled>Start Talk</button>
+        <div id="waiting-count-bar" style="display:none; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:13px; color:rgba(255,255,255,0.45);">
+            <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#00e5ff; animation:pulse-dot 1.4s infinite;"></span>
+            <span id="waiting-count-text">현재 대화 상대를 찾는 중인 사람이 없어요.</span>
+        </div>
         <button id="report-btn">🚨 Report Toxic User</button>
         <button id="leave-btn">Leave Room</button>
 
@@ -1265,7 +1269,16 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         lastTalked: "Last talked:",
         callBtn: "Call",
         friendAdded: "🎉 Added to your friend list!",
-        privateChannelAlert: (name) => `Connecting to private channel with ${name}...`
+        privateChannelAlert: (name) => `Connecting to private channel with ${name}...`,
+        roomHeaderLabel: "Conversation Topic",
+        icebrkLabel: "Icebreaking Suggestion",
+        roomPartTitle: "Participants",
+        roomLeaveBtn: "🚪 Leave Room",
+        roomReportBtn: "🚨 Report",
+        roomWaiting: "Waiting for others...",
+        waitingNone: "No one is looking for a conversation partner right now.",
+        waitingOne: "1 person is also looking for a conversation partner!",
+        waitingMany: (n) => `${n} people are looking for a conversation partner!`,
         },
         ko: {
             title: "Boundless Talk",
@@ -1332,7 +1345,16 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         lastTalked: "마지막 대화:",
         callBtn: "연결",
         friendAdded: "🎉 친구 목록에 추가되었습니다!",
-        privateChannelAlert: (name) => `${name} 님과의 비밀 채널로 연결합니다...`
+        privateChannelAlert: (name) => `${name} 님과의 비밀 채널로 연결합니다...`,
+        roomHeaderLabel: "대화 주제",
+        icebrkLabel: "아이스브레이킹 제안",
+        roomPartTitle: "참여자",
+        roomLeaveBtn: "🚪 대화방 나가기",
+        roomReportBtn: "🚨 신고하기",
+        roomWaiting: "다른 참여자를 기다리는 중...",
+        waitingNone: "현재 대화 상대를 찾는 중인 사람이 없어요.",
+        waitingOne: "1명이 대화 상대를 찾고 있어요!",
+        waitingMany: (n) => `${n}명이 대화 상대를 찾고 있어요!`,
         }
     };
 
@@ -1409,6 +1431,28 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
             // 친구 요청 실시간 수신 리스너 시작
             startFriendRequestListener();
+
+            // 대기자 presence 설정 (대화방 밖에 있을 때 waiting 노드에 등록)
+            const waitingRef = database.ref('waiting/' + user.uid);
+            waitingRef.set(true);
+            waitingRef.onDisconnect().remove();
+
+            // 전체 대기자 수 실시간 리스닝
+            database.ref('waiting').on('value', (snap) => {
+                const data = snap.val() || {};
+                const count = Object.keys(data).filter(k => k !== user.uid).length;
+                const bar = document.getElementById('waiting-count-bar');
+                const txt = document.getElementById('waiting-count-text');
+                const lang = textData[currentLang];
+                if (!isJoined) {
+                    bar.style.display = 'flex';
+                    if (count === 0) txt.textContent = lang.waitingNone;
+                    else if (count === 1) txt.textContent = lang.waitingOne;
+                    else txt.textContent = lang.waitingMany(count);
+                } else {
+                    bar.style.display = 'none';
+                }
+            });
 
         } else {
             document.getElementById("auth-section").style.display = "flex";
@@ -1507,6 +1551,14 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('ban-desc').innerText = lang.banDesc;
         document.getElementById('rep-m-title').innerText = lang.reportTitle;
         document.getElementById('rep-m-desc').innerText = lang.reportDesc;
+
+        // room screen 라벨 업데이트
+        document.getElementById('room-header-label').innerText = lang.roomHeaderLabel;
+        document.getElementById('icebreaker-label').innerText = lang.icebrkLabel;
+        document.getElementById('room-part-title').innerText = lang.roomPartTitle;
+        document.getElementById('room-leave-btn').innerText = lang.roomLeaveBtn;
+        document.getElementById('room-report-btn').innerText = lang.roomReportBtn;
+        updateRoomParticipants();
 
         if (document.getElementById('google-login-text')) {
             document.getElementById('google-login-text').innerText = (currentLang === 'en') ? "Sign in with Google" : "구글 로그인";
@@ -1843,7 +1895,15 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         if (introDescEl) introDescEl.innerHTML = textData[currentLang].introDesc;
         if (introBtnEl) introBtnEl.textContent = textData[currentLang].introBtn;
         updateUI();
-        if (isJoined) renderParticipantsUI();
+        if (isJoined) {
+            renderParticipantsUI();
+            // icebreaker 텍스트를 새 언어로 재추첨
+            const list = ICEBREAKERS[currentLang] || ICEBREAKERS.ko;
+            const pick = list[Math.floor(Math.random() * list.length)];
+            document.getElementById('icebreaker-emoji').textContent = pick.emoji;
+            document.getElementById('icebreaker-text').textContent = pick.text;
+            document.getElementById('icebreaker-sub').textContent = pick.sub;
+        }
     });
 
 // 5. Netlify AI Serverless Function 연동 매칭 엔진
@@ -2013,6 +2073,9 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             myUid = await client.join(AGORA_APP_ID, safeAgoraChannelId, agoraToken, 0);
             dbg('9. join 성공');
             isJoined = true;
+            // 대화 시작 → 대기자 목록에서 제거
+            if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).remove();
+            document.getElementById('waiting-count-bar').style.display = 'none';
             roomParticipants = [];
             sessionParticipants = [];
             agoraToFirebaseUid = {};
@@ -2077,6 +2140,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             isJoined = false;
             isJoining = false;
             myUid = null;
+            // 연결 해제 → 다시 대기자로 등록
+            if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).set(true);
 
             document.getElementById('join-btn').disabled = false;
             document.getElementById('join-btn').style.display = "block";
@@ -2204,12 +2269,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('icebreaker-text').textContent = pick.text;
         document.getElementById('icebreaker-sub').textContent = pick.sub;
 
-        const isKo = currentLang === 'ko';
-        document.getElementById('room-header-label').textContent = isKo ? '대화 주제' : 'Topic';
-        document.getElementById('icebreaker-label').textContent = isKo ? '아이스브레이킹 제안' : 'Icebreaker Tip';
-        document.getElementById('room-part-title').textContent = isKo ? '참여자' : 'Participants';
-        document.getElementById('room-leave-btn').textContent = isKo ? '🚪 대화방 나가기' : '🚪 Leave Room';
-        document.getElementById('room-report-btn').textContent = isKo ? '🚨 신고하기' : '🚨 Report';
+        const lang = textData[currentLang];
+        document.getElementById('room-header-label').textContent = lang.roomHeaderLabel;
+        document.getElementById('icebreaker-label').textContent = lang.icebrkLabel;
+        document.getElementById('room-part-title').textContent = lang.roomPartTitle;
+        document.getElementById('room-leave-btn').textContent = lang.roomLeaveBtn;
+        document.getElementById('room-report-btn').textContent = lang.roomReportBtn;
 
         updateRoomParticipants();
         document.getElementById('room-screen').classList.add('active');
@@ -2375,6 +2440,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
             isJoined = false;
             isJoining = false;
+            // 대화방 나가기 → 다시 대기자로 등록
+            if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).set(true);
             hideRoomScreen();
             document.getElementById('join-btn').style.display = "block";
             document.getElementById('join-btn').disabled = false;
