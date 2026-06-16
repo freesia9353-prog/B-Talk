@@ -137,7 +137,7 @@
         #ban-overlay > p { font-size: 16px; color: #a0aec0; max-width: 500px; line-height: 1.6; }
         #appeal-textarea:focus { border-color: rgba(255,59,48,0.5); box-shadow: 0 0 12px rgba(255,59,48,0.15); }
 
-        .lang-container { position: absolute; top: 20px; right: 20px; z-index: 10; }
+        .lang-container { position: fixed; top: 20px; right: 20px; z-index: 500; }
         .lang-btn {
             background: transparent; border: 1px solid rgba(255,255,255,0.15);
             color: rgba(255,255,255,0.6); padding: 6px 14px; font-size: 12px; font-weight: 600;
@@ -1005,6 +1005,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             <div class="badge-item">👍 <span id="label-manner">Manner</span>: <strong id="score-manner">0</strong></div>
             <div class="badge-item">🧠 <span id="label-logic">Logic</span>: <strong id="score-logic">0</strong></div>
             <div class="badge-item">🤣 <span id="label-humor">Humor</span>: <strong id="score-humor">0</strong></div>
+            <div class="badge-item">🤗 <span id="label-empathy">Empathy</span>: <strong id="score-empathy">0</strong></div>
+            <div class="badge-item">🔥 <span id="label-passion">Passion</span>: <strong id="score-passion">0</strong></div>
         </div>
     </div>
 
@@ -1028,6 +1030,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
                 <button class="badge-vote-btn" id="btn-vote-manner" onclick="executeVote('manner')" disabled>👍 <span id="vote-manner">Good Manners</span></button>
                 <button class="badge-vote-btn" id="btn-vote-logic" onclick="executeVote('logic')" disabled>🧠 <span id="vote-logic">Highly Logical</span></button>
                 <button class="badge-vote-btn" id="btn-vote-humor" onclick="executeVote('humor')" disabled>🤣 <span id="vote-humor">Very Humorous</span></button>
+                <button class="badge-vote-btn" id="btn-vote-empathy" onclick="executeVote('empathy')" disabled>🤗 <span id="vote-empathy">Great Listener</span></button>
+                <button class="badge-vote-btn" id="btn-vote-passion" onclick="executeVote('passion')" disabled>🔥 <span id="vote-passion">Very Passionate</span></button>
                 <button class="badge-vote-btn" id="btn-add-friend" onclick="executeAddFriend()" style="background: rgba(0, 229, 255, 0.05); border-color: rgba(0, 229, 255, 0.4);" disabled>
         <span id="label-add-friend">➕ 친구 추가</span>
     </button>
@@ -1210,10 +1214,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             toggleBtn: "한국어",
             opt3: "3 members", opt4: "4 members (recommended)", opt6: "6 members",
             repTitle: "My Reputation Profile",
-            badgeManner: "Manners", badgeLogic: "Logic", badgeHumor: "Humor",
+            badgeManner: "Manners", badgeLogic: "Logic", badgeHumor: "Humor", badgeEmpathy: "Empathy", badgePassion: "Passion",
             mTitle: "Conversation Report",
             mDesc: "Check out what AI noted, and gift a peer badge!",
-            vManner: "Good Manners", vLogic: "Highly Logical", vHumor: "Very Humorous", vSkip: "Skip & Close",
+            vManner: "Good Manners", vLogic: "Highly Logical", vHumor: "Very Humorous", vEmpathy: "Great Listener", vPassion: "Very Passionate", vSkip: "Skip & Close",
             aiLoading: "AI Chat Summary Loading...",
             aiHeadline: "Today's Dialogue Highlights",
             aiSample: "• Discussed the core values of chosen topic dynamically.<br>• Respectful conversation flows detected by AI engine.<br>• Peer validation phase ready.",
@@ -1277,10 +1281,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             toggleBtn: "EN",
             opt3: "3명", opt4: "4명 (권장)", opt6: "6명",
             repTitle: "나의 평판 프로필",
-            badgeManner: "매너 좋음", badgeLogic: "논리적임", badgeHumor: "유머러스",
+            badgeManner: "매너 좋음", badgeLogic: "논리적임", badgeHumor: "유머러스", badgeEmpathy: "공감능력", badgePassion: "열정적임",
             mTitle: "대화 분석 리포트",
             mDesc: "AI가 요약한 대화 내용을 파악하고 함께 대화한 상대방에게 배지를 선물해 보세요.",
-            vManner: "매너가 좋았어요", vLogic: "논리적이었어요", vHumor: "유머러스했어요", vSkip: "닫기 및 건너뛰기",
+            vManner: "매너가 좋았어요", vLogic: "논리적이었어요", vHumor: "유머러스했어요", vEmpathy: "공감을 잘해줬어요", vPassion: "열정적이었어요", vSkip: "닫기 및 건너뛰기",
             aiLoading: "AI가 대화 요약본을 추출하는 중...",
             aiHeadline: "오늘의 대화 핵심 쟁점 분석 결과",
             aiSample: "• 참여자들이 설정한 주제에 부합하는 소통이 정상적으로 이루어졌습니다.<br>• 외모나 조건 없는 목소리 기반의 긍정적 티키타카가 감지되었습니다.<br>• 상호 평판 배지 수여가 가능합니다.",
@@ -1395,10 +1399,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
             // 평판 데이터 연동 (배지 수 누적 리스닝)
             database.ref('users/' + user.uid + '/badges').on('value', (snapshot) => {
-                const badges = snapshot.val() || { manner: 0, logic: 0, humor: 0 };
+                const badges = snapshot.val() || {};
                 document.getElementById('score-manner').innerText = badges.manner || 0;
                 document.getElementById('score-logic').innerText = badges.logic || 0;
                 document.getElementById('score-humor').innerText = badges.humor || 0;
+                document.getElementById('score-empathy').innerText = badges.empathy || 0;
+                document.getElementById('score-passion').innerText = badges.passion || 0;
             });
 
             // 친구 요청 실시간 수신 리스너 시작
@@ -1486,11 +1492,15 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('label-manner').innerText = lang.badgeManner;
         document.getElementById('label-logic').innerText = lang.badgeLogic;
         document.getElementById('label-humor').innerText = lang.badgeHumor;
+        document.getElementById('label-empathy').innerText = lang.badgeEmpathy;
+        document.getElementById('label-passion').innerText = lang.badgePassion;
         document.getElementById('modal-title').innerText = lang.mTitle;
         document.getElementById('modal-desc').innerText = lang.mDesc;
         document.getElementById('vote-manner').innerText = lang.vManner;
         document.getElementById('vote-logic').innerText = lang.vLogic;
         document.getElementById('vote-humor').innerText = lang.vHumor;
+        document.getElementById('vote-empathy').innerText = lang.vEmpathy;
+        document.getElementById('vote-passion').innerText = lang.vPassion;
         document.getElementById('vote-skip').innerText = lang.vSkip;
         document.getElementById('part-title-label').innerText = lang.partLabel;
         document.getElementById('ban-title').innerText = lang.banTitle;
@@ -2269,8 +2279,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             if (!data) return;
 
             const badgeNames = {
-                manner: currentLang === 'ko' ? "매너 좋음" : "Manners",
-                logic:  currentLang === 'ko' ? "논리적임" : "Logic",
+                manner:  currentLang === 'ko' ? "매너 좋음" : "Manners",
+                logic:   currentLang === 'ko' ? "논리적임" : "Logic",
+                empathy: currentLang === 'ko' ? "공감능력" : "Empathy",
+                passion: currentLang === 'ko' ? "열정적임" : "Passion",
                 humor:  currentLang === 'ko' ? "유머러스함" : "Humor"
             };
             alert(currentLang === 'ko'
@@ -2480,6 +2492,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('btn-vote-manner').disabled = !enable;
         document.getElementById('btn-vote-logic').disabled = !enable;
         document.getElementById('btn-vote-humor').disabled = !enable;
+        document.getElementById('btn-vote-empathy').disabled = !enable;
+        document.getElementById('btn-vote-passion').disabled = !enable;
         document.getElementById('btn-add-friend').disabled = !enable;
     }
 
