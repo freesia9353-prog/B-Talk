@@ -829,11 +829,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             background: rgba(0,229,255,0.12); border-color: var(--accent-color);
             color: var(--accent-color);
         }
-        .subtitle-lang-row { display: none; align-items: center; gap: 6px; }
+        .subtitle-lang-row { display: none; align-items: center; gap: 6px; margin-top: 4px; width: 100%; justify-content: center; }
         .subtitle-lang-select {
-            font-size: 12px; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.12); color: #fff;
-            padding: 4px 8px; border-radius: 8px; cursor: pointer;
+            background: #0d0e12; color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 3px 8px; border-radius: 6px; cursor: pointer;
+            outline: none; font-size: 11px;
         }
         .subtitle-arrow { color: rgba(255,255,255,0.35); font-size: 13px; }
         .subtitle-list {
@@ -1133,21 +1134,21 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
                     <button class="subtitle-toggle-btn" id="subtitle-toggle-btn" onclick="toggleSubtitles()">💬 번역 자막</button>
                     <div class="subtitle-lang-row" id="subtitle-lang-row">
                         <select class="subtitle-lang-select" id="my-lang-select">
-                            <option value="ko">🇰🇷 한국어</option>
-                            <option value="en">🇺🇸 English</option>
-                            <option value="ja">🇯🇵 日本語</option>
-                            <option value="zh-CN">🇨🇳 中文</option>
-                            <option value="es">🇪🇸 Español</option>
-                            <option value="fr">🇫🇷 Français</option>
+                            <option value="ko">한국어</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh-CN">中文</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
                         </select>
                         <span class="subtitle-arrow">→</span>
                         <select class="subtitle-lang-select" id="target-lang-select">
-                            <option value="en">🇺🇸 English</option>
-                            <option value="ko">🇰🇷 한국어</option>
-                            <option value="ja">🇯🇵 日本語</option>
-                            <option value="zh-CN">🇨🇳 中文</option>
-                            <option value="es">🇪🇸 Español</option>
-                            <option value="fr">🇫🇷 Français</option>
+                            <option value="en">English</option>
+                            <option value="ko">한국어</option>
+                            <option value="ja">日本語</option>
+                            <option value="zh-CN">中文</option>
+                            <option value="es">Español</option>
+                            <option value="fr">Français</option>
                         </select>
                     </div>
                 </div>
@@ -1622,6 +1623,16 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         document.getElementById('room-leave-btn').innerText = lang.roomLeaveBtn;
         document.getElementById('room-report-btn').innerText = lang.roomReportBtn;
         updateRoomParticipants();
+
+        // 자막 버튼 텍스트 언어 동기화
+        const stBtn = document.getElementById('subtitle-toggle-btn');
+        if (stBtn) {
+            if (subtitlesEnabled) {
+                stBtn.textContent = currentLang === 'ko' ? '💬 자막 켜짐 ●' : '💬 Subtitles ON ●';
+            } else {
+                stBtn.textContent = currentLang === 'ko' ? '💬 번역 자막' : '💬 Subtitles';
+            }
+        }
 
         if (document.getElementById('google-login-text')) {
             document.getElementById('google-login-text').innerText = (currentLang === 'en') ? "Sign in with Google" : "구글 로그인";
@@ -2438,7 +2449,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     }
 
     async function sendToWhisper(blob, mimeType) {
-        if (!firebaseUser || !currentChannelName) return;
+        const cu = auth.currentUser;
+        if (!cu || !currentChannelName) return;
         const ext = mimeType.includes('mp4') ? 'm4a' : 'webm';
         const formData = new FormData();
         formData.append('audio', blob, 'audio.' + ext);
@@ -2449,10 +2461,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             const data = await res.json();
             const text = (data.text || '').trim();
             if (!text) return;
-            await database.ref('subtitles/' + currentChannelName + '/' + firebaseUser.uid).set({
+            await database.ref('subtitles/' + currentChannelName + '/' + cu.uid).set({
                 text, lang: mySubtitleLang, ts: Date.now()
             });
-            displaySubtitle(firebaseUser.uid, text, null, true);
+            displaySubtitle(cu.uid, text, null, true);
         } catch(e) { console.warn('Whisper error:', e); }
     }
 
@@ -2469,7 +2481,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         subtitleFbRef = database.ref('subtitles/' + currentChannelName);
         subtitleFbRef.on('child_changed', async (snap) => {
             const uid = snap.key;
-            if (firebaseUser && uid === firebaseUser.uid) return;
+            const cu = auth.currentUser;
+            if (cu && uid === cu.uid) return;
             const data = snap.val();
             if (!data || !data.text) return;
 
@@ -2483,8 +2496,9 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
     function stopSubtitleListener() {
         if (subtitleFbRef) { subtitleFbRef.off(); subtitleFbRef = null; }
-        if (firebaseUser && currentChannelName) {
-            database.ref('subtitles/' + currentChannelName + '/' + firebaseUser.uid).remove();
+        const cu = auth.currentUser;
+        if (cu && currentChannelName) {
+            database.ref('subtitles/' + currentChannelName + '/' + cu.uid).remove();
         }
     }
 
@@ -2502,7 +2516,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     function displaySubtitle(uid, original, translated, isSelf) {
         const list = document.getElementById('subtitle-list');
         if (!list) return;
-        const animal = assignAnimal(isSelf ? (firebaseUser ? firebaseUser.uid : uid) : uid);
+        const cu = auth.currentUser;
+        const animal = assignAnimal(isSelf ? (cu ? cu.uid : uid) : uid);
         const item = document.createElement('div');
         item.className = 'subtitle-item';
 
@@ -2681,7 +2696,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             isJoined = false;
             isJoining = false;
             // 대화방 나가기 → 다시 대기자로 등록
-            if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).set(true);
+            const _cu = auth.currentUser;
+            if (_cu) database.ref('waiting/' + _cu.uid).set(true);
             hideRoomScreen();
             document.getElementById('join-btn').style.display = "block";
             document.getElementById('join-btn').disabled = false;
@@ -2720,7 +2736,8 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             // 에러가 나도 UI는 반드시 정리
             isJoined = false;
             isJoining = false;
-            if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).set(true);
+            const cu = auth.currentUser;
+            if (cu) database.ref('waiting/' + cu.uid).set(true);
             hideRoomScreen();
             document.getElementById('join-btn').style.display = "block";
             document.getElementById('join-btn').disabled = false;
