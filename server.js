@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const Busboy = require('busboy');
+const OpenAI = require('openai');
 
 const app = express();
 app.use(cors());
@@ -9,8 +10,6 @@ app.use(express.json());
 
 const APP_ID = process.env.AGORA_APP_ID;
 const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
 const TOKEN_EXPIRY_SEC = 3600;
 
 app.get('/token', (req, res) => {
@@ -41,7 +40,9 @@ app.get('/token', (req, res) => {
 });
 
 app.post('/transcribe', (req, res) => {
-    if (!OPENAI_API_KEY) return res.status(500).json({ error: 'OpenAI key not configured' });
+    if (!process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ error: 'OPENAI_API_KEY not set' });
+    }
 
     const bb = Busboy({ headers: req.headers });
     let audioBuffer = null;
@@ -56,41 +57,30 @@ app.post('/transcribe', (req, res) => {
     });
 
     bb.on('field', (name, val) => {
-        if (name === 'lang') lang = val.split('-')[0]; // 'zh-CN' → 'zh'
+        if (name === 'lang') lang = val.split('-')[0];
     });
 
     bb.on('close', async () => {
-        if (!audioBuffer || audioBuffer.length < 500) {
-            return res.json({ text: '' });
-        }
         try {
-            const ext = audioMime.includes('mp4') ? 'm4a' : 'webm';
-            const { FormData, Blob } = globalThis;
-
-            const formData = new FormData();
-            const blob = new Blob([audioBuffer], { type: audioMime });
-            formData.append('file', blob, `audio.${ext}`);
-            formData.append('model', 'whisper-1');
-            if (lang) formData.append('language', lang);
-            formData.append('response_format', 'text');
-
-            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-                body: formData
-            });
-
-            if (!response.ok) {
-                const err = await response.text();
-                console.error('Whisper API error:', err);
-                return res.status(500).json({ error: 'Whisper failed' });
+            if (!audioBuffer || audioBuffer.length < 1000) {
+                return res.json({ text: '' });
             }
 
-            const text = await response.text();
-            res.json({ text: text.trim() });
-        } catch (e) {
-            console.error('Transcribe error:', e);
-            res.status(500).json({ error: e.message });
+            const ext = audioMime.includes('mp4') ? 'm4a' : 'webm';
+            const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+            const transcription = await client.audio.transcriptions.create({
+                file: await OpenAI.toFile(audioBuffer, `audio.${ext}`, { type: audioMime }),
+                model: 'whisper-1',
+                language: lang || undefined,
+                response_format: 'text'
+            });
+
+            const text = typeof transcription === 'string' ? transcription.trim() : (transcription.text || '').trim();
+            res.json({ text });
+        } catch (err) {
+            console.error('Transcription error:', err.message);
+            res.status(500).json({ error: err.message });
         }
     });
 
@@ -100,4 +90,4 @@ app.post('/transcribe', (req, res) => {
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`B-Talk server running on port ${PORT}`));
