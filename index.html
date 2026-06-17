@@ -2474,7 +2474,7 @@ recorder.onstop = async () => {
         const ext = mimeType.includes('mp4') ? 'm4a' : 'webm';
         const formData = new FormData();
         formData.append('audio', blob, 'audio.' + ext);
-        formData.append('lang', mySubtitleLang);
+        formData.append('lang', document.getElementById('my-lang-select').value);
         try {
             const res = await fetch(TOKEN_SERVER_URL + '/transcribe', { method: 'POST', body: formData });
             if (!res.ok) return;
