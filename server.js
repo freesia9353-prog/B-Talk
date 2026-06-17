@@ -3,6 +3,7 @@ const cors = require('cors');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const Busboy = require('busboy');
 const OpenAI = require('openai');
+const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
 app.use(cors());
@@ -88,9 +89,10 @@ app.post('/transcribe', (req, res) => {
 
             // Filter common Whisper hallucinations
             const hallucinations = [
-                '시청해주셔서 감사합니다', '오늘도 시청해', '구독과 좋아요',
+                '시청해주셔서', '영상 봐주셔서', '영상봐주셔서', '오늘도 영상',
+                '구독과 좋아요', '구독버튼', '좋아요버튼', '다음 영상에서 만나요',
                 'thank you for watching', 'thanks for watching', 'please subscribe',
-                'performance data collection', 'subtitles by', 'MBC', 'KBS'
+                'performance data collection', 'subtitles by', 'like and subscribe'
             ];
             const isHallucination = hallucinations.some(h => raw.toLowerCase().includes(h.toLowerCase()));
             const text = isHallucination ? '' : raw;
@@ -98,6 +100,56 @@ app.post('/transcribe', (req, res) => {
             res.json({ text });
         } catch (err) {
             console.error('Transcription error:', err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    req.pipe(bb);
+});
+
+app.post('/summarize', (req, res) => {
+    if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY not set' });
+    }
+
+    const bb = Busboy({ headers: req.headers });
+    let audioBuffer = null;
+    let audioMime = 'audio/webm';
+    let lang = 'ko';
+
+    bb.on('file', (name, file, info) => {
+        audioMime = info.mimeType || 'audio/webm';
+        const chunks = [];
+        file.on('data', chunk => chunks.push(chunk));
+        file.on('close', () => { audioBuffer = Buffer.concat(chunks); });
+    });
+
+    bb.on('field', (name, val) => {
+        if (name === 'lang') lang = val;
+    });
+
+    bb.on('close', async () => {
+        try {
+            if (!audioBuffer) {
+                return res.status(400).json({ error: '오디오 파일이 없습니다.' });
+            }
+
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+            const prompt = lang === 'ko'
+                ? '이 음성 대화를 듣고 주요 내용을 3문장 이내로 요약해 주세요. 대화가 아니라면 "소음만 감지되었습니다"라고 응답해 주세요.'
+                : 'Listen to this conversation and summarize the main points in under 3 sentences. If there is no speech, reply with "Only noise detected."';
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: [
+                    prompt,
+                    { inlineData: { data: audioBuffer.toString('base64'), mimeType: audioMime } }
+                ]
+            });
+
+            res.json({ summary: response.text });
+        } catch (err) {
+            console.error('Summarize error:', err.message);
             res.status(500).json({ error: err.message });
         }
     });
