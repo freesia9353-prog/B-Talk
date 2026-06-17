@@ -73,16 +73,24 @@ app.post('/transcribe', (req, res) => {
                 file: await OpenAI.toFile(audioBuffer, `audio.${ext}`, { type: audioMime }),
                 model: 'whisper-1',
                 language: lang || undefined,
-                response_format: 'text'
+                response_format: 'verbose_json'
             });
 
-            const raw = typeof transcription === 'string' ? transcription.trim() : (transcription.text || '').trim();
+            // If no_speech_prob is high, it's silence/noise — discard
+            const noSpeechProb = transcription.segments && transcription.segments.length > 0
+                ? transcription.segments[0].no_speech_prob
+                : 0;
+            if (noSpeechProb > 0.5) {
+                return res.json({ text: '' });
+            }
 
-            // Filter common Whisper hallucinations on silence
+            const raw = (transcription.text || '').trim();
+
+            // Filter common Whisper hallucinations
             const hallucinations = [
-                '시청해주셔서 감사합니다', '구독', '좋아요', 'thank you for watching',
-                'thanks for watching', 'please subscribe', 'performance data collection',
-                'MBC', 'KBS', 'subtitles by'
+                '시청해주셔서 감사합니다', '오늘도 시청해', '구독과 좋아요',
+                'thank you for watching', 'thanks for watching', 'please subscribe',
+                'performance data collection', 'subtitles by', 'MBC', 'KBS'
             ];
             const isHallucination = hallucinations.some(h => raw.toLowerCase().includes(h.toLowerCase()));
             const text = isHallucination ? '' : raw;
