@@ -1049,13 +1049,13 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 
     <div id="user-action-buttons">
     <button id="btn-talk-again" style="margin: 0; display: none;">🗣️ 또 대화하기</button>
-    <button id="toggle-rep-btn" style="display: none;">📊 내 평판</button>
+    <button id="toggle-rep-btn" style="display: none;">📊 내 바이브</button>
     <button id="logout-btn" style="display: none;">로그아웃</button>
           </div>
 
 
    <div class="reputation-board" id="reputation-section" style="display: none;">
-        <div class="reputation-title" id="rep-title">My Reputation Profile</div>
+        <div class="reputation-title" id="rep-title">MY VIBE</div>
         <div class="badge-list">
             <div class="badge-item">👍 <span id="label-manner">Manner</span>: <strong id="score-manner">0</strong></div>
             <div class="badge-item">🧠 <span id="label-logic">Logic</span>: <strong id="score-logic">0</strong></div>
@@ -1294,7 +1294,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             alertJoin: (topic, max) => `Joined [${topic}] channel! (${max} people max) Waiting for peers...`,
             toggleBtn: "한국어",
             opt3: "3 members", opt4: "4 members (recommended)", opt6: "6 members",
-            repTitle: "My Reputation Profile",
+            repTitle: "MY VIBE",
             badgeManner: "Manners", badgeLogic: "Logic", badgeHumor: "Humor", badgeEmpathy: "Empathy", badgePassion: "Passion",
             mTitle: "Conversation Report",
             mDesc: "Check out what AI noted, and gift a peer badge!",
@@ -1312,7 +1312,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             reportTitle: "🚨 Report Toxic User",
             reportDesc: "Select the user you wish to report. The past 1 minute of voice dialogue will be uploaded and audited by AI Safeguard.",
             reportSuccess: "Report Submitted. The target is being evaluated under AI surveillance.",
-            badgeSuccess: "Reputation Badge successfully transferred!",
+            badgeSuccess: "Vibe successfully transferred!",
             emailPlaceholder: "Email address (e.g., test@gmail.com)",
             passwordPlaceholder: "Password (minimum 6 characters)",
             emailLogin: "Login",
@@ -1370,7 +1370,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             alertJoin: (topic, max) => `[${topic}] 채널에 입장했습니다! (정원 ${max}명) 다른 사람을 기다리는 중...`,
             toggleBtn: "EN",
             opt3: "3명", opt4: "4명 (권장)", opt6: "6명",
-            repTitle: "나의 평판 프로필",
+            repTitle: "나의 바이브",
             badgeManner: "매너 좋음", badgeLogic: "논리적임", badgeHumor: "유머러스", badgeEmpathy: "공감능력", badgePassion: "열정적임",
             mTitle: "대화 분석 리포트",
             mDesc: "AI가 요약한 대화 내용을 파악하고 함께 대화한 상대방에게 배지를 선물해 보세요.",
@@ -1388,7 +1388,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             reportTitle: "🚨 불량 유저 신고하기",
             reportDesc: "신고 대상을 선택해 주세요. 신고 시점 기준 '최근 1분간'의 실시간 음성 스트림 결합 데이터가 AI 유해성 감별 백엔드로 전송됩니다.",
             reportSuccess: "신고 완료. 유해 발언이 확인되면 즉시 강력 영구 처분이 단행됩니다.",
-            badgeSuccess: "상대방의 평판 프로필에 배지를 성공적으로 누적했습니다!",
+            badgeSuccess: "상대방에게 바이브를 성공적으로 전달했습니다!",
             emailPlaceholder: "이메일 주소 (예: test@naver.com)",
             passwordPlaceholder: "비밀번호 (6자리 이상)",
             emailLogin: "로그인",
@@ -1630,9 +1630,9 @@ database.ref('activeTopics').on('value', (snap) => {
 
         // 토글 버튼 텍스트 다국어 처리
         if (currentLang === 'ko') {
-            document.getElementById('toggle-rep-btn').innerText = isRepOpen ? "📊 평판 접기" : "📊 내 평판";
+            document.getElementById('toggle-rep-btn').innerText = isRepOpen ? "📊 바이브 접기" : "📊 내 바이브";
         } else {
-            document.getElementById('toggle-rep-btn').innerText = isRepOpen ? "📊 Hide Reputation Profile" : "📊 View My Reputation";
+            document.getElementById('toggle-rep-btn').innerText = isRepOpen ? "📊 HIDE MY VIBE" : "📊 MY VIBE";
         }
 
         if (appTitle) appTitle.innerText = lang.title;
@@ -1770,10 +1770,10 @@ database.ref('activeTopics').on('value', (snap) => {
 
         if (repSection.style.display === "none") {
             repSection.style.display = "block";
-            btn.innerText = (currentLang === 'ko') ? "📊 내 평판 접기" : "📊 Hide My Reputation";
+            btn.innerText = (currentLang === 'ko') ? "📊 내 바이브 접기" : "📊 HIDE MY VIBE";
         } else {
             repSection.style.display = "none";
-            btn.innerText = (currentLang === 'ko') ? "📊 내 평판" : "📊 View My Reputation";
+            btn.innerText = (currentLang === 'ko') ? "📊 내 바이브" : "📊 MY VIBE";
         }
     });
     // ── 이메일 로그인 토글 ──
