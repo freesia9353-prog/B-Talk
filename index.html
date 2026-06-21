@@ -3380,11 +3380,11 @@ function loadFriendsList() {
                 const statusDot = document.getElementById(`status-${friendUid}`);
                 if (statusDot) {
                     if (isOnline) {
-                        statusDot.innerText = '🟢';
-                        statusDot.style.color = '#34c759';
+                        statusDot.innerText = '●';
+                        statusDot.style.color = '#00e5ff';
                     } else {
-                        statusDot.innerText = '⚪';
-                        statusDot.style.color = 'gray';
+                        statusDot.innerText = '●';
+                        statusDot.style.color = 'rgba(255,255,255,0.2)';
                     }
                 }
             });
@@ -3644,3 +3644,4 @@ function showSuspendOverlay(until, reason, uid) {
 </script>
 </body>
 </html>
+
