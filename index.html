@@ -1728,9 +1728,11 @@ database.ref('activeTopics').on('value', (snap) => {
         const pwaTitle = document.getElementById('pwa-title');
         const pwaDesc = document.getElementById('pwa-desc');
         const pwaInstallBtn = document.getElementById('pwa-install-btn');
+        const pwaLaterBtn = document.getElementById('pwa-later-btn');
         if (pwaTitle) pwaTitle.textContent = lang.pwaBannerTitle;
         if (pwaDesc) pwaDesc.textContent = lang.pwaBannerDesc;
         if (pwaInstallBtn) pwaInstallBtn.textContent = lang.pwaInstallBtn;
+        if (pwaLaterBtn) pwaLaterBtn.textContent = lang.pwaLaterBtn;
         const iosTitle = document.getElementById('ios-title');
         const iosDesc = document.getElementById('ios-desc');
         if (iosTitle) iosTitle.textContent = lang.iosBannerTitle;
@@ -3611,7 +3613,7 @@ function showSuspendOverlay(until, reason, uid) {
   </div>
   <div style="display:flex; gap:8px; margin-top:12px;">
     <button id="pwa-install-btn" style="flex:1; background:var(--accent-color); color:#000; border:none; border-radius:10px; padding:10px; font-size:13px; font-weight:700; cursor:pointer; margin:0;">홈 화면에 추가</button>
-    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="flex:1; background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px; font-size:13px; cursor:pointer; margin:0;">나중에</button>
+    <button id="pwa-later-btn" onclick="document.getElementById('pwa-banner').style.display='none'" style="flex:1; background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px; font-size:13px; cursor:pointer; margin:0;">나중에</button>
   </div>
 </div>
 
