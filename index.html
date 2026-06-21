@@ -3209,6 +3209,12 @@ return text;
         if (!selectedVoteTarget) return;
 
         try {
+            // 모바일에서 auth 토큰 만료 방지: 강제 갱신
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                try { await currentUser.getIdToken(true); } catch(e) { console.warn('token refresh failed', e); }
+            }
+
             // 1. Firebase로 배지 수신 알림 전송 (상대방 signals/{uid} 경로에 기록)
             try {
                 await database.ref(`signals/${selectedVoteTarget}`).set({
