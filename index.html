@@ -1112,7 +1112,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
                         </div>
 
                         <div id="signup-step-3" style="display:none;">
-                            <input type="password" id="signup-pw-input" placeholder="비밀번호 (6자 이상)" style="margin-bottom:0;">
+                            <input type="password" id="signup-pw-input" placeholder="비밀번호 (영문+숫자+특수문자)" style="margin-bottom:0;">
                             <input type="password" id="signup-pw-confirm-input" placeholder="비밀번호 확인 (재입력)" style="margin-bottom:0; margin-top:10px;">
                             <div class="form-hint" id="pw-match-hint" style="margin-top:6px; min-height:16px;"></div>
                             <button class="auth-submit-btn primary" id="email-signup-btn" style="margin-top:4px;" disabled>가입 완료</button>
@@ -1551,7 +1551,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             reportSuccess: "Report Submitted. The target is being evaluated under AI surveillance.",
             badgeSuccess: "INDEX successfully transferred!",
             emailPlaceholder: "Email address (e.g., test@gmail.com)",
-            passwordPlaceholder: "Password (minimum 6 characters)",
+            passwordPlaceholder: "Password",
             emailLogin: "Login",
             emailSignup: "Sign Up",
             // ── 이메일 인증/가입 확장 다국어 ──
@@ -1566,12 +1566,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             checkVerifyBtnText: "Confirm Verification",
             checkVerifyBtnLoading: "Checking...",
             resendVerifyBtnText: "Resend Email",
-            signupPwPlaceholder: "Password (6+ characters)",
+            signupPwPlaceholder: "Password (letter + number + special char)",
             signupPwConfirmPlaceholder: "Confirm Password (re-enter)",
             emailSignupBtnText: "Complete Sign Up",
             emailSignupBtnLoading: "Processing...",
             stepLabels: ["Enter Email", "Verify Email", "Set Password"],
-            pwHintMin: "Password must be at least 6 characters.",
+            pwHintMin: "8+ chars with letter, number & special character (!@#$ etc.)",
             pwHintMismatch: "Passwords do not match.",
             pwHintMatch: "✓ Passwords match.",
         introDesc: `<strong>No barriers</strong> of nationality, age, or gender.<br><br>Connect with someone, somewhere in the world<br>through nothing but <strong>words</strong>.<br><br>Ready for a conversation<br><strong>unlike any you've had before?</strong>`,
@@ -1661,12 +1661,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             checkVerifyBtnText: "인증 완료 확인",
             checkVerifyBtnLoading: "확인 중...",
             resendVerifyBtnText: "메일 재전송",
-            signupPwPlaceholder: "비밀번호 (6자 이상)",
+            signupPwPlaceholder: "비밀번호 (영문+숫자+특수문자)",
             signupPwConfirmPlaceholder: "비밀번호 확인 (재입력)",
             emailSignupBtnText: "가입 완료",
             emailSignupBtnLoading: "처리 중...",
             stepLabels: ["이메일 입력", "메일 인증", "비밀번호 설정"],
-            pwHintMin: "비밀번호는 6자 이상이어야 합니다.",
+            pwHintMin: "영문+숫자+특수문자(!@#$ 등) 조합 8자 이상이어야 합니다.",
             pwHintMismatch: "비밀번호가 일치하지 않습니다.",
             pwHintMatch: "✓ 비밀번호가 일치합니다.",
         introDesc: `국적도, 나이도, 성별도<br><strong>아무런 장벽이 없는 대화</strong>.<br><br>세상 어딘가의 누군가와<br>오직 <strong>주제</strong>로만 연결되는 순간.<br><br>경험해본 적 없는<br><strong>설레는 대화</strong>를 시작해볼까요?`,
@@ -2375,8 +2375,9 @@ database.ref('activeTopics').on('value', (snap) => {
         const btn = document.getElementById('email-signup-btn');
         const lang = textData[currentLang];
 
+        const pwStrong = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/.test(pw);
         if (!pw2) { hint.innerText = ""; btn.disabled = true; return; }
-        if (pw.length < 6) {
+        if (!pwStrong) {
             hint.style.color = "#ff6b6b";
             hint.innerText = lang.pwHintMin;
             btn.disabled = true;
