@@ -3226,11 +3226,9 @@ return text;
                 });
             } catch(e) { console.warn('Signal write failed:', e); }
 
-            // 2. Firebase Database 트랜잭션 원자적 연산 - 상대방 UID에 점수 다이렉트 누적 처리
+            // 2. 서버 사이드 increment — 읽기 권한 불필요, 쓰기만으로 원자적 증가
             const targetBadgeRef = database.ref('users/' + selectedVoteTarget + '/badges/' + badgeType);
-            await targetBadgeRef.transaction((currentValue) => {
-                return (currentValue || 0) + 1;
-            });
+            await targetBadgeRef.set(firebase.database.ServerValue.increment(1));
 
             alert(textData[currentLang].badgeSuccess);
             removeVoteTarget(selectedVoteTarget);
