@@ -3785,21 +3785,243 @@ async function respondInvite(response) {
 }
 
     const ABOUT_CONTENT = {
-        privacy: {
-            title: '🔒 Privacy Policy',
-            content: `(내용을 입력해주세요)`
-        },
         terms: {
-            title: '📄 Terms of Service',
-            content: `(내용을 입력해주세요)`
+            en: { title: '📄 Terms of Service', content:
+`Last updated: June 2026
+
+By using B-TALK, you agree to these Terms of Service.
+
+─── Service Conditions ───
+B-TALK is an anonymous voice chat platform. You must be 14 years of age or older to use this service. By accessing B-TALK, you confirm that you meet this requirement.
+
+─── User Responsibilities ───
+Users are responsible for their own conversations and behavior. You agree to use B-TALK only for lawful purposes and in a manner that does not infringe the rights of others.
+
+─── Prohibited Activities ───
+You may not use B-TALK for:
+• Hate speech, racism, or discrimination
+• Sexual harassment or exploitation
+• Threats or incitement to violence
+• Child exploitation of any kind
+• Doxxing or sharing others' personal information
+• Recording conversations without consent
+• Spam or impersonation
+• Any illegal activities under applicable law
+
+─── Account Suspension ───
+We reserve the right to suspend or terminate accounts that violate our policies, at our sole discretion and without prior notice.
+
+─── Disclaimer ───
+B-TALK only provides a platform for connecting users. Users are solely responsible for the content of their conversations. Conversations do not represent the opinions of B-TALK.
+
+─── Limitation of Liability ───
+B-TALK is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the service or content shared by other users.
+
+─── Service Changes ───
+We reserve the right to modify or discontinue the service at any time without notice.
+
+─── Governing Law ───
+These Terms shall be governed by the laws of the Republic of Korea.` },
+            ko: { title: '📄 이용약관', content:
+`최종 업데이트: 2026년 6월
+
+B-TALK을 이용함으로써 본 이용약관에 동의하는 것으로 간주됩니다.
+
+─── 서비스 이용 조건 ───
+B-TALK은 익명 음성 채팅 플랫폼입니다. 만 14세 이상만 이용 가능합니다. 서비스 접속 시 해당 조건을 충족함을 확인하는 것으로 간주됩니다.
+
+─── 이용자 책임 ───
+이용자는 자신의 대화 내용과 행동에 대해 스스로 책임을 집니다. B-TALK은 타인의 권리를 침해하지 않는 합법적인 목적으로만 이용해야 합니다.
+
+─── 금지 행위 ───
+다음 행위는 엄격히 금지됩니다:
+• 혐오 발언, 인종차별, 차별 행위
+• 성희롱 또는 성적 착취
+• 협박 또는 폭력 선동
+• 아동 착취 행위
+• 타인의 개인정보 노출(doxxing)
+• 동의 없는 대화 녹음
+• 스팸 또는 사칭
+• 관련 법률을 위반하는 모든 행위
+
+─── 계정 정지 ───
+당사는 정책을 위반한 계정을 사전 통보 없이 정지 또는 영구 탈퇴 처리할 권한을 보유합니다.
+
+─── 면책 조항 ───
+B-TALK은 이용자 간 연결을 위한 플랫폼만을 제공합니다. 대화 내용에 대한 책임은 전적으로 이용자에게 있으며, 대화 내용은 B-TALK의 의견을 대변하지 않습니다.
+
+─── 책임 제한 ───
+B-TALK은 "있는 그대로" 제공되며 어떠한 보증도 하지 않습니다. 서비스 이용 또는 타 이용자가 공유한 콘텐츠로 인한 손해에 대해 당사는 책임을 지지 않습니다.
+
+─── 서비스 변경 ───
+당사는 사전 통보 없이 서비스를 변경하거나 중단할 권한을 보유합니다.
+
+─── 준거법 ───
+본 약관은 대한민국 법률에 따라 규율됩니다.` }
+        },
+        privacy: {
+            en: { title: '🔒 Privacy Policy', content:
+`Last updated: June 2026
+
+B-TALK is committed to protecting your privacy.
+
+─── Information We Collect ───
+• Google Account info (name, email, profile photo) — via Google Login
+• Firebase UID — to identify your account
+• Voice data — processed in real time for conversation; not stored permanently
+• IP address — collected automatically by our server infrastructure
+• Inquiry messages — stored in Firebase when you contact us
+• Usage data — session timestamps, channel activity
+
+─── How We Use Your Information ───
+• To provide and operate the B-TALK service
+• To match you with other users by topic
+• To enforce our community guidelines
+• To respond to inquiries
+
+─── Firebase & Google ───
+We use Firebase (Google LLC) for authentication, real-time database, and hosting. Your data may be processed on Google's servers. Please refer to Google's Privacy Policy for details.
+
+─── Cookies ───
+We use minimal cookies for session management and language preferences. No advertising cookies are used.
+
+─── Data Retention ───
+Account data is retained until you delete your account. Inquiry messages are retained for support purposes.
+
+─── Your Rights ───
+You may request deletion of your data by contacting us at freesia9353@gmail.com.
+
+─── Contact ───
+freesia9353@gmail.com` },
+            ko: { title: '🔒 개인정보처리방침', content:
+`최종 업데이트: 2026년 6월
+
+B-TALK은 이용자의 개인정보 보호를 중요하게 생각합니다.
+
+─── 수집하는 정보 ───
+• Google 계정 정보(이름, 이메일, 프로필 사진) — Google 로그인을 통해 수집
+• Firebase UID — 계정 식별을 위해 사용
+• 음성 데이터 — 실시간 대화에 한해 처리되며 영구 저장되지 않음
+• IP 주소 — 서버 인프라에 의해 자동 수집
+• 문의 메시지 — 문의 시 Firebase에 저장
+• 이용 데이터 — 세션 시간, 채널 활동 정보
+
+─── 정보 이용 목적 ───
+• B-TALK 서비스 제공 및 운영
+• 주제 기반 이용자 매칭
+• 커뮤니티 가이드라인 적용
+• 문의 응대
+
+─── Firebase 및 Google ───
+인증, 실시간 데이터베이스, 호스팅을 위해 Firebase(Google LLC)를 사용합니다. 이용자 데이터는 Google 서버에서 처리될 수 있습니다. 자세한 내용은 Google 개인정보처리방침을 참조하세요.
+
+─── 쿠키 ───
+세션 관리 및 언어 설정을 위한 최소한의 쿠키만 사용합니다. 광고 목적의 쿠키는 사용하지 않습니다.
+
+─── 데이터 보존 ───
+계정 데이터는 탈퇴 시까지 보존됩니다. 문의 메시지는 지원 목적으로 보관됩니다.
+
+─── 이용자 권리 ───
+개인정보 삭제를 요청하시려면 freesia9353@gmail.com으로 문의해 주세요.
+
+─── 문의 ───
+freesia9353@gmail.com` }
         },
         guidelines: {
-            title: '📋 Community Guidelines',
-            content: `(내용을 입력해주세요)`
+            en: { title: '📋 Community Guidelines', content:
+`B-TALK is a space for open, anonymous voice conversations. To keep it safe and welcoming for everyone, please follow these guidelines.
+
+─── Be Respectful ───
+Treat every person with basic respect, regardless of their background, opinion, or identity.
+
+─── Prohibited Behavior ───
+The following are strictly prohibited:
+
+• Hate Speech — No content that attacks people based on race, ethnicity, religion, gender, sexual orientation, or disability
+• Racism & Discrimination — Zero tolerance
+• Sexual Harassment — No unwanted sexual content or advances
+• Threats & Violence — No threats of harm to any person
+• Child Exploitation — Absolutely prohibited; will be reported to authorities
+• Doxxing — Do not share or solicit others' personal information
+• Recording without Consent — Do not record conversations without the other party's explicit consent
+• Spam & Impersonation — No repetitive disruptive behavior or impersonating others
+• Illegal Activities — Do not facilitate or promote illegal acts
+
+─── Enforcement ───
+Users violating these guidelines may be warned, suspended, or permanently banned. We reserve the right to act without prior notice.
+
+Users are responsible for their own conversations and behavior.` },
+            ko: { title: '📋 커뮤니티 가이드라인', content:
+`B-TALK은 개방적이고 익명의 음성 대화 공간입니다. 모두가 안전하고 편안하게 이용할 수 있도록 아래 가이드라인을 준수해 주세요.
+
+─── 서로 존중하기 ───
+상대방의 배경, 의견, 정체성에 관계없이 기본적인 예의를 지켜주세요.
+
+─── 금지 행위 ───
+다음 행위는 엄격히 금지됩니다:
+
+• 혐오 발언 — 인종, 민족, 종교, 성별, 성적 지향, 장애 등을 이유로 한 비하 발언 금지
+• 인종차별 및 차별 — 무관용 원칙 적용
+• 성희롱 — 원치 않는 성적 발언 또는 접근 금지
+• 협박 및 폭력 — 타인을 향한 위협 발언 금지
+• 아동 착취 — 절대 금지; 관계 당국에 신고됩니다
+• 개인정보 유포(Doxxing) — 타인의 개인정보 공유 또는 요청 금지
+• 동의 없는 녹음 — 상대방의 명시적 동의 없이 대화를 녹음하는 행위 금지
+• 스팸 및 사칭 — 반복적인 방해 행위 및 타인 사칭 금지
+• 불법 행위 — 불법 행위의 조장 또는 홍보 금지
+
+─── 제재 ───
+가이드라인을 위반한 이용자는 경고, 일시 정지 또는 영구 이용 정지될 수 있습니다. 사전 통보 없이 조치가 취해질 수 있습니다.
+
+이용자는 자신의 대화 내용과 행동에 대해 스스로 책임을 집니다.` }
         },
         safety: {
-            title: '🛡️ Safety',
-            content: `(내용을 입력해주세요)`
+            en: { title: '🛡️ Safety', content:
+`Your safety is our priority. Here are some tips for staying safe on B-TALK.
+
+─── During Conversations ───
+• If you feel uncomfortable at any point, leave the conversation immediately — no explanation needed.
+• Never share personal information such as your real name, phone number, address, school, or workplace.
+• Do not agree to meet strangers you've connected with online. If you do, meet in a public place at your own risk.
+• Trust your instincts. If something feels wrong, it probably is.
+
+─── Reporting & Blocking ───
+• Use the 🚨 Report button to report abusive users. Reports are reviewed and action is taken.
+• Reported audio data may be analyzed to determine violations.
+
+─── Protecting Your Privacy ───
+• B-TALK is anonymous by design. Your identity is represented by an animal avatar.
+• Do not reveal your identity unless you choose to.
+• Be aware that others may attempt to identify you through indirect clues in conversation.
+
+─── Emergency ───
+If you believe someone is in immediate danger, please contact local emergency services.
+
+─── Disclaimer ───
+B-TALK only provides a platform for connecting users. Users are solely responsible for the content of their conversations. Conversations do not represent the opinions of B-TALK.` },
+            ko: { title: '🛡️ 안전 정책', content:
+`이용자의 안전이 최우선입니다. B-TALK을 안전하게 이용하기 위한 안내입니다.
+
+─── 대화 중 안전 ───
+• 불편함을 느끼는 순간, 즉시 대화방을 나가세요. 이유를 설명할 필요가 없습니다.
+• 실명, 전화번호, 주소, 학교, 직장 등 개인정보를 절대 공유하지 마세요.
+• 온라인에서 연결된 낯선 사람과의 오프라인 만남에는 신중하세요. 만날 경우 공공장소를 이용하고, 책임은 본인에게 있습니다.
+• 느낌을 믿으세요. 무언가 이상하다고 느껴지면 그 자리를 피하세요.
+
+─── 신고 및 차단 ───
+• 부적절한 이용자는 🚨 신고하기 버튼을 이용해 신고하세요. 신고 내용은 검토 후 조치됩니다.
+• 신고된 음성 데이터는 규정 위반 여부 판단을 위해 분석될 수 있습니다.
+
+─── 개인정보 보호 ───
+• B-TALK은 익명을 기반으로 설계되어 있습니다. 이용자는 동물 아바타로 표시됩니다.
+• 본인이 원하지 않는 한 신원을 밝히지 않아도 됩니다.
+• 대화 중 간접적인 단서를 통해 신원을 파악하려는 시도에 주의하세요.
+
+─── 응급 상황 ───
+누군가 즉각적인 위험에 처해 있다고 판단되면 지역 응급기관에 연락하세요.
+
+─── 면책 조항 ───
+B-TALK은 이용자 간 연결을 위한 플랫폼만을 제공합니다. 대화 내용에 대한 책임은 전적으로 이용자에게 있으며, 대화 내용은 B-TALK의 의견을 대변하지 않습니다.` }
         }
     };
 
@@ -3810,8 +4032,9 @@ async function respondInvite(response) {
     function openAboutPage(key) {
         const page = ABOUT_CONTENT[key];
         if (!page) return;
-        document.getElementById('about-page-title').textContent = page.title;
-        document.getElementById('about-page-content').textContent = page.content;
+        const lang = ABOUT_CONTENT[key][currentLang] || ABOUT_CONTENT[key]['en'];
+        document.getElementById('about-page-title').textContent = lang.title;
+        document.getElementById('about-page-content').textContent = lang.content;
         document.getElementById('about-modal').classList.remove('active');
         document.getElementById('about-page-modal').classList.add('active');
     }
