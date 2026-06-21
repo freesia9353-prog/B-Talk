@@ -479,6 +479,11 @@
         <span class="nav-badge" id="report-badge" style="display:none">0</span>
     </div>
 
+    <div class="nav-item" onclick="navigate('online')">
+        <span class="icon">🟢</span> 현재 접속자
+        <span class="nav-badge" id="online-badge" style="display:none;background:var(--green)">0</span>
+    </div>
+
     <div class="nav-section">처리</div>
     <div class="nav-item" onclick="navigate('appeals')">
         <span class="icon">📋</span> 이의신청
@@ -620,6 +625,28 @@
                     </tr></thead>
                     <tbody id="report-list">
                         <tr class="loading-row"><td colspan="6">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 현재 접속자 -->
+        <div class="page" id="page-online">
+            <div class="section-header">
+                <div class="section-title">현재 접속자</div>
+                <div class="section-count" id="online-count"></div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr>
+                        <th>UID</th>
+                        <th>이메일</th>
+                        <th>상태</th>
+                        <th>배지 (매너/논리/유머)</th>
+                        <th>액션</th>
+                    </tr></thead>
+                    <tbody id="online-list">
+                        <tr class="loading-row"><td colspan="5">불러오는 중...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -960,7 +987,8 @@
         document.getElementById('page-' + page).classList.add('active');
         event.currentTarget.classList.add('active');
         currentPage = page;
-        const titles = { dashboard:'대시보드', users:'전체 회원', banned:'정지·차단 회원', reports:'신고 내역', appeals:'이의신청' };
+        if (page === 'online') startOnlineListener();
+        const titles = { dashboard:'대시보드', users:'전체 회원', banned:'정지·차단 회원', reports:'신고 내역', appeals:'이의신청', online:'현재 접속자' };
         document.getElementById('page-title').textContent = titles[page] || page;
     }
 
@@ -1081,6 +1109,47 @@
     async function rejectAppeal(uid) {
         await db.ref(`appeals/${uid}`).remove();
         await loadAppeals();
+    }
+
+    // ── 현재 접속자 (실시간) ──
+    let onlineListener = null;
+
+    function startOnlineListener() {
+        if (onlineListener) return;
+        const presenceRef = db.ref('users');
+        onlineListener = presenceRef.on('value', snap => {
+            const users = snap.val() || {};
+            const onlineUsers = Object.entries(users).filter(([, u]) => u.presence && u.presence.online === true);
+            const badge = document.getElementById('online-badge');
+            if (onlineUsers.length > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = onlineUsers.length;
+            } else {
+                badge.style.display = 'none';
+            }
+            document.getElementById('online-count').textContent = `${onlineUsers.length}명 접속 중`;
+            const tbody = document.getElementById('online-list');
+            if (!onlineUsers.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="5">현재 접속 중인 회원 없음</td></tr>';
+                return;
+            }
+            tbody.innerHTML = onlineUsers.map(([uid, u]) => {
+                const st = getUserStatus(u);
+                const badges = u.badges || {};
+                const email = u.email || '—';
+                return `<tr>
+                    <td class="uid-cell" title="${uid}">${uid.substring(0,10)}...</td>
+                    <td>${email}</td>
+                    <td><span class="status-pill ${st.cls}">${st.label}</span></td>
+                    <td>
+                        <span class="badge-small">🤝 ${badges.manner||0}</span>
+                        <span class="badge-small">🧠 ${badges.logic||0}</span>
+                        <span class="badge-small">😄 ${badges.humor||0}</span>
+                    </td>
+                    <td><button class="action-btn btn-view" onclick="openUserModal('${uid}')">상세</button></td>
+                </tr>`;
+            }).join('');
+        });
     }
 </script>
 </body>
