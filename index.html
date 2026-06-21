@@ -1169,7 +1169,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     <button id="btn-talk-again" style="margin: 0; display: none;">🗣️ 또 대화하기</button>
     <button id="toggle-rep-btn" style="display: none;">📊 대화지수</button>
     <button id="logout-btn" style="display: none;">로그아웃</button>
-    <button id="inquiry-btn" onclick="openInquiryModal()" style="display:none; background:transparent; border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.4); font-size:12px; padding:8px 16px; margin:0; width:auto;">✉️ 문의하기</button>
+    <button id="inquiry-btn" onclick="openInquiryModal()" style="display:none; background:transparent; border:none; color:rgba(255,255,255,0.35); font-size:12px; padding:4px 8px; margin:0; width:auto; text-decoration:underline; cursor:pointer;" onmouseover="this.style.color='#00e5ff'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">문의하기</button>
           </div>
 
 
@@ -1875,6 +1875,8 @@ database.ref('activeTopics').on('value', (snap) => {
         document.getElementById('leave-btn').innerText = lang.leaveBtn;
         document.getElementById('report-btn').innerText = lang.reportBtn;
         document.getElementById('lang-toggle-btn').innerText = lang.toggleBtn;
+        const inquiryBtn = document.getElementById('inquiry-btn');
+        if (inquiryBtn) inquiryBtn.textContent = currentLang === 'ko' ? '문의하기' : 'Contact Us';
         document.getElementById('opt-3').innerText = lang.opt3;
         document.getElementById('opt-4').innerText = lang.opt4;
         document.getElementById('opt-6').innerText = lang.opt6;
