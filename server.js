@@ -3,7 +3,7 @@ const cors = require('cors');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const Busboy = require('busboy');
 const OpenAI = require('openai');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 app.use(cors());
@@ -210,16 +210,11 @@ app.get('/listmodels', async (req, res) => {
 app.post('/sendVerifyEmail', async (req, res) => {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ error: 'email and code required' });
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+    if (!process.env.RESEND_API_KEY) {
         return res.status(500).json({ error: 'Email not configured' });
     }
 
-    const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS }
-    });
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const html = `
 <!DOCTYPE html>
@@ -259,8 +254,8 @@ app.post('/sendVerifyEmail', async (req, res) => {
 </html>`;
 
     try {
-        await transporter.sendMail({
-            from: `"BOUNDLESS TALK" <${process.env.GMAIL_USER}>`,
+        await resend.emails.send({
+            from: 'BOUNDLESS TALK <onboarding@resend.dev>',
             to: email,
             subject: `[BOUNDLESS TALK] 이메일 인증 코드: ${code}`,
             html
