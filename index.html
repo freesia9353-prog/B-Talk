@@ -1399,10 +1399,10 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
     <!-- About 세부 내용 모달 -->
     <div class="modal-overlay" id="about-page-modal">
         <div class="modal-content" style="max-width:480px; max-height:80vh; overflow-y:auto;">
-            <button onclick="goBackFromAboutPage()" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:13px; cursor:pointer; padding:0; margin-bottom:12px; text-align:left;">← 뒤로</button>
+            <button id="about-page-back-btn" onclick="goBackFromAboutPage()" style="background:transparent; border:none; color:rgba(255,255,255,0.4); font-size:13px; cursor:pointer; padding:0; margin-bottom:12px; text-align:left;">← 뒤로</button>
             <h3 id="about-page-title" style="margin-bottom:16px; font-size:16px;"></h3>
             <div id="about-page-content" style="font-size:13px; color:rgba(255,255,255,0.65); line-height:1.8; white-space:pre-wrap;"></div>
-            <button onclick="goBackFromAboutPage()" style="margin-top:20px; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.4); border:none; border-radius:10px; padding:10px; width:100%; cursor:pointer; font-size:13px;">닫기</button>
+            <button id="about-page-close-btn" onclick="goBackFromAboutPage()" style="margin-top:20px; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.4); border:none; border-radius:10px; padding:10px; width:100%; cursor:pointer; font-size:13px;">닫기</button>
         </div>
     </div>
 
@@ -1974,6 +1974,13 @@ database.ref('activeTopics').on('value', (snap) => {
         const alGuide = document.getElementById('about-label-guidelines'); if(alGuide) alGuide.textContent = isKo ? '커뮤니티 가이드라인' : 'Community Guidelines';
         const alSafety = document.getElementById('about-label-safety'); if(alSafety) alSafety.textContent = isKo ? '안전 정책' : 'Safety';
         const aboutClose = document.getElementById('about-close-btn'); if(aboutClose) aboutClose.textContent = isKo ? '닫기' : 'Close';
+        const apBack = document.getElementById('about-page-back-btn'); if(apBack) apBack.textContent = isKo ? '← 뒤로' : '← Back';
+        const apClose = document.getElementById('about-page-close-btn'); if(apClose) apClose.textContent = isKo ? '닫기' : 'Close';
+        if (currentAboutPageKey && document.getElementById('about-page-modal').classList.contains('active')) {
+            const apLang = ABOUT_CONTENT[currentAboutPageKey][currentLang] || ABOUT_CONTENT[currentAboutPageKey]['en'];
+            document.getElementById('about-page-title').textContent = apLang.title;
+            document.getElementById('about-page-content').textContent = apLang.content;
+        }
         if (inqDesc) inqDesc.innerHTML = currentLang === 'ko' ? '불편한 점이나 건의 사항을 보내주세요.<br>이메일로 답변해드립니다.' : 'Send us your feedback or questions.<br>We\'ll reply via email.';
         if (inqText) inqText.placeholder = currentLang === 'ko' ? '문의 내용을 입력해주세요...' : 'Enter your message...';
         if (inqSubmit) inqSubmit.textContent = currentLang === 'ko' ? '보내기' : 'Send';
@@ -4138,9 +4145,12 @@ B-TALK은 이용자 간 연결을 위한 플랫폼만을 제공합니다. 대화
         document.getElementById('about-modal').classList.add('active');
     }
 
+    let currentAboutPageKey = null;
+
     function openAboutPage(key) {
         const page = ABOUT_CONTENT[key];
         if (!page) return;
+        currentAboutPageKey = key;
         const lang = ABOUT_CONTENT[key][currentLang] || ABOUT_CONTENT[key]['en'];
         document.getElementById('about-page-title').textContent = lang.title;
         document.getElementById('about-page-content').textContent = lang.content;
