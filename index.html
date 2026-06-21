@@ -506,6 +506,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         }
         .badge-vote-btn:hover:not(:disabled) { background: rgba(0,229,255,0.08); border-color: var(--accent-color); color: var(--accent-color); }
         .badge-vote-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .badge-vote-btn.btn-disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
@@ -1190,12 +1191,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
             <div class="target-select-list" id="vote-target-container"></div>
 
             <div class="badge-select-grid">
-                <button class="badge-vote-btn" id="btn-vote-manner" onclick="executeVote('manner')" disabled>👍 <span id="vote-manner">NICE</span></button>
-                <button class="badge-vote-btn" id="btn-vote-logic" onclick="executeVote('logic')" disabled>🧠 <span id="vote-logic">LOGIC</span></button>
-                <button class="badge-vote-btn" id="btn-vote-humor" onclick="executeVote('humor')" disabled>🤣 <span id="vote-humor">FUN</span></button>
-                <button class="badge-vote-btn" id="btn-vote-empathy" onclick="executeVote('empathy')" disabled>🤗 <span id="vote-empathy">WARM</span></button>
-                <button class="badge-vote-btn" id="btn-vote-passion" onclick="executeVote('passion')" disabled>🔥 <span id="vote-passion">BOLD</span></button>
-                <button class="badge-vote-btn" id="btn-add-friend" onclick="executeAddFriend()" style="background: rgba(0, 229, 255, 0.05); border-color: rgba(0, 229, 255, 0.4);" disabled>
+                <button class="badge-vote-btn btn-disabled" id="btn-vote-manner" onclick="executeVote('manner')">👍 <span id="vote-manner">NICE</span></button>
+                <button class="badge-vote-btn btn-disabled" id="btn-vote-logic" onclick="executeVote('logic')">🧠 <span id="vote-logic">LOGIC</span></button>
+                <button class="badge-vote-btn btn-disabled" id="btn-vote-humor" onclick="executeVote('humor')">🤣 <span id="vote-humor">FUN</span></button>
+                <button class="badge-vote-btn btn-disabled" id="btn-vote-empathy" onclick="executeVote('empathy')">🤗 <span id="vote-empathy">WARM</span></button>
+                <button class="badge-vote-btn btn-disabled" id="btn-vote-passion" onclick="executeVote('passion')">🔥 <span id="vote-passion">BOLD</span></button>
+                <button class="badge-vote-btn btn-disabled" id="btn-add-friend" onclick="executeAddFriend()" style="background: rgba(0, 229, 255, 0.05); border-color: rgba(0, 229, 255, 0.4);"
         <span id="label-add-friend">➕ 친구 추가</span>
     </button>
                 <button class="badge-vote-btn" onclick="closeModal()" style="background:transparent; border:none; color:rgba(255,255,255,0.3); font-weight:400; margin-top: 10px;" id="vote-skip">Skip Feedback</button>
@@ -3154,15 +3155,18 @@ return text;
             btn.dataset.uid = uid;
             const animal = uidToAnimal[uid] || { emoji: "👤", label: `참여자 ${index + 1}` };
             btn.innerText = `${animal.emoji} ${animal.label}`;
-            const selectTarget = (e) => {
-                e.preventDefault();
+            btn.addEventListener('pointerdown', () => {
+                document.querySelectorAll('#vote-target-container .target-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedVoteTarget = uid;
+                toggleVoteBadgeButtons(true);
+            });
+            btn.onclick = () => {
                 document.querySelectorAll('#vote-target-container .target-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedVoteTarget = uid;
                 toggleVoteBadgeButtons(true);
             };
-            btn.addEventListener('touchstart', selectTarget, { passive: false });
-            btn.onclick = selectTarget;
             container.appendChild(btn);
         });
     }
@@ -3182,12 +3186,13 @@ return text;
     }
 
     function toggleVoteBadgeButtons(enable) {
-        document.getElementById('btn-vote-manner').disabled = !enable;
-        document.getElementById('btn-vote-logic').disabled = !enable;
-        document.getElementById('btn-vote-humor').disabled = !enable;
-        document.getElementById('btn-vote-empathy').disabled = !enable;
-        document.getElementById('btn-vote-passion').disabled = !enable;
-        document.getElementById('btn-add-friend').disabled = !enable;
+        ['btn-vote-manner','btn-vote-logic','btn-vote-humor','btn-vote-empathy','btn-vote-passion','btn-add-friend'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = !enable;
+            if (enable) el.classList.remove('btn-disabled');
+            else el.classList.add('btn-disabled');
+        });
     }
 
     async function executeVote(badgeType) {
