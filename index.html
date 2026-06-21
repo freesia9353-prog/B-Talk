@@ -3072,16 +3072,15 @@ return text;
             // 피어 배지 전송 타겟 리스트박스 렌더링 구성 (uidToAnimal 초기화 전에 호출!)
             setupVoteTargetsUI();
 
+            // 모바일 ghost tap 방지: 터치 이벤트 소멸 후 모달 오픈
             // AI 대화 요약본 분석 브리핑 레이아웃 활성화
-            document.getElementById('badge-modal').classList.add('active');
-            document.getElementById('summary-headline').innerText = textData[currentLang].aiLoading;
-            document.getElementById('summary-content').innerHTML = '<span style="color:rgba(255,255,255,0.35);">🤖 AI가 대화 내용을 분석하는 중...</span>';
-
-            // 실제 AI 요약 호출 (비동기 — 모달은 즉시 열림)
-            requestAISummary();
-
-            // 모달 렌더 후 동물 맵 초기화
-            uidToAnimal = {};
+            setTimeout(() => {
+                document.getElementById('badge-modal').classList.add('active');
+                document.getElementById('summary-headline').innerText = textData[currentLang].aiLoading;
+                document.getElementById('summary-content').innerHTML = '<span style="color:rgba(255,255,255,0.35);">🤖 AI가 대화 내용을 분석하는 중...</span>';
+                requestAISummary();
+                uidToAnimal = {};
+            }, 400);
 
         } catch (error) {
             console.error("Error occurred while leaving room:", error);
