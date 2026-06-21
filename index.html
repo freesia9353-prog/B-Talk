@@ -1429,6 +1429,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         waitingNone: "No one is looking for a conversation partner right now.",
         waitingOne: "1 person is also looking for a conversation partner!",
         waitingMany: (n) => `${n} people are looking for a conversation partner!`,
+        pwaBannerTitle: "Add to Home Screen for a better experience",
+        pwaBannerDesc: "Launches instantly like an app — one tap and you're in.",
+        pwaInstallBtn: "Add to Home Screen",
+        pwaLaterBtn: "Later",
+        iosBannerTitle: "Add to Home Screen for a better experience",
+        iosBannerDesc: `Tap the share button (⬆) below,<br>then select <strong style="color:rgba(255,255,255,0.7);">"Add to Home Screen"</strong>.`,
         },
         ko: {
             title: "Boundless Talk",
@@ -1505,6 +1511,12 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         waitingNone: "현재 대화 상대를 찾는 중인 사람이 없어요.",
         waitingOne: "1명이 대화 상대를 찾고 있어요!",
         waitingMany: (n) => `${n}명이 대화 상대를 찾고 있어요!`,
+        pwaBannerTitle: "홈 화면에 추가하고 더 편하게 대화하세요",
+        pwaBannerDesc: "앱처럼 빠르게 실행되고, 한 번의 터치로 바로 접속할 수 있습니다.",
+        pwaInstallBtn: "홈 화면에 추가",
+        pwaLaterBtn: "나중에",
+        iosBannerTitle: "홈 화면에 추가하고 더 편하게 대화하세요",
+        iosBannerDesc: `하단 공유 버튼(⬆)을 누른 뒤<br><strong style="color:rgba(255,255,255,0.7);">"홈 화면에 추가"</strong>를 선택하세요.`,
         }
     };
 
@@ -1711,6 +1723,18 @@ database.ref('activeTopics').on('value', (snap) => {
         if (appTitle) appTitle.innerText = lang.title;
         if (appSubtitle) appSubtitle.innerText = lang.subtitle;
         document.getElementById('app-title').innerText = lang.title;
+
+        // PWA 배너 다국어
+        const pwaTitle = document.getElementById('pwa-title');
+        const pwaDesc = document.getElementById('pwa-desc');
+        const pwaInstallBtn = document.getElementById('pwa-install-btn');
+        if (pwaTitle) pwaTitle.textContent = lang.pwaBannerTitle;
+        if (pwaDesc) pwaDesc.textContent = lang.pwaBannerDesc;
+        if (pwaInstallBtn) pwaInstallBtn.textContent = lang.pwaInstallBtn;
+        const iosTitle = document.getElementById('ios-title');
+        const iosDesc = document.getElementById('ios-desc');
+        if (iosTitle) iosTitle.textContent = lang.iosBannerTitle;
+        if (iosDesc) iosDesc.innerHTML = lang.iosBannerDesc;
         document.getElementById('topic-input').placeholder = lang.placeholder;
         document.getElementById('maxpeople').innerText = lang.maxPeopleLabel;
         document.getElementById('leave-btn').innerText = lang.leaveBtn;
