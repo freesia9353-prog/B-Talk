@@ -2098,7 +2098,6 @@ database.ref('activeTopics').on('value', (snap) => {
 
     document.getElementById('lang-toggle-btn').addEventListener('click', () => {
         currentLang = (currentLang === "en") ? "ko" : "en";
-        uidToAnimal = {};
         // 언어 토글 버튼 텍스트 업데이트
         document.getElementById('lang-toggle-btn').innerText = currentLang === 'ko' ? 'EN' : 'KO';
         // 인트로 화면 언어 업데이트
@@ -2540,7 +2539,8 @@ database.ref('activeTopics/' + safeAgoraChannelId + '/' + auth.currentUser.uid).
     };
 
     function showRoomScreen(topic) {
-        document.getElementById('room-topic-display').textContent = topic || '—';
+        const displayTopic = (topic && topic.startsWith('🔒_')) ? (currentLang === 'ko' ? '🔒 1:1 대화' : '🔒 Private Chat') : (topic || '—');
+        document.getElementById('room-topic-display').textContent = displayTopic;
 
         const list = ICEBREAKERS[currentLang] || ICEBREAKERS.ko;
         const pick = list[Math.floor(Math.random() * list.length)];
