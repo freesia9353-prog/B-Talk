@@ -3608,13 +3608,11 @@ async function respondInvite(response) {
 
     function showIntro2() {
         const intro = document.getElementById('intro-screen');
+        const intro2 = document.getElementById('intro-screen-2');
+        intro2.style.display = 'flex';
+        intro2.classList.add('show');
         intro.classList.add('hide');
-        setTimeout(() => {
-            intro.style.display = 'none';
-            const intro2 = document.getElementById('intro-screen-2');
-            intro2.style.display = 'flex';
-            intro2.classList.add('show');
-        }, 500);
+        setTimeout(() => { intro.style.display = 'none'; }, 500);
     }
 
     function startFromIntro() {
