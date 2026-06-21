@@ -190,10 +190,10 @@ app.post('/getTopic', async (req, res) => {
 
         const data = await geminiRes.json();
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        console.log('Gemini raw response:', JSON.stringify(data));
+        console.log('Gemini response:', JSON.stringify(data));
         let normalized = (raw || '').trim().toLowerCase();
         normalized = normalized.replace(/[^a-z0-9_]/g, '').slice(0, 64) || 'general';
-        res.json({ topic: normalized, debug_raw: raw, debug_status: geminiRes.status });
+        res.json({ topic: normalized, debug_raw: raw, debug_status: geminiRes.status, debug_error: data.error });
     } catch (err) {
         console.error('getTopic error:', err.message);
         res.status(500).json({ error: err.message });
