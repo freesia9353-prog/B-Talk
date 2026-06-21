@@ -2310,7 +2310,7 @@ setTimeout(() => toast.remove(), 10000);
                 // 퇴장 시 자동 삭제
                 database.ref(`channels/${safeAgoraChannelId}/members/${myUid}`).onDisconnect().remove();
                 if (finalTopic && !finalTopic.startsWith('🔒_')) {
-    database.ref('activeTopics/' + safeAgoraChannelId + '/' + myUid).set({ topic: finalTopic, ts: firebase.database.ServerValue.TIMESTAMP });
+    database.ref('activeTopics/' + safeAgoraChannelId + '/' + auth.currentUser.uid).set({ topic: finalTopic, ts: firebase.database.ServerValue.TIMESTAMP });
 database.ref('activeTopics/' + safeAgoraChannelId + '/' + myUid).onDisconnect().remove();
 }
             }
