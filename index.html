@@ -1362,19 +1362,19 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
                 </label>
                 <label class="consent-item">
                     <input type="checkbox" id="consent-terms" onchange="updateConsentBtn()">
-                    <span><span id="consent-terms-label">이용약관</span>에 동의합니다 <button class="consent-view-btn" onclick="openAboutPage('terms')" id="consent-terms-view">보기</button></span>
+                    <span><span id="consent-terms-label">이용약관</span><span id="consent-terms-suffix">에 동의합니다</span> <button class="consent-view-btn" onclick="openAboutPage('terms')" id="consent-terms-view">보기</button></span>
                 </label>
                 <label class="consent-item">
                     <input type="checkbox" id="consent-privacy" onchange="updateConsentBtn()">
-                    <span><span id="consent-privacy-label">개인정보처리방침</span>에 동의합니다 <button class="consent-view-btn" onclick="openAboutPage('privacy')" id="consent-privacy-view">보기</button></span>
+                    <span><span id="consent-privacy-label">개인정보처리방침</span><span id="consent-privacy-suffix">에 동의합니다</span> <button class="consent-view-btn" onclick="openAboutPage('privacy')" id="consent-privacy-view">보기</button></span>
                 </label>
                 <label class="consent-item">
                     <input type="checkbox" id="consent-guidelines" onchange="updateConsentBtn()">
-                    <span><span id="consent-guidelines-label">커뮤니티 가이드라인</span>에 동의합니다 <button class="consent-view-btn" onclick="openAboutPage('guidelines')" id="consent-guidelines-view">보기</button></span>
+                    <span><span id="consent-guidelines-label">커뮤니티 가이드라인</span><span id="consent-guidelines-suffix">에 동의합니다</span> <button class="consent-view-btn" onclick="openAboutPage('guidelines')" id="consent-guidelines-view">보기</button></span>
                 </label>
                 <label class="consent-item">
                     <input type="checkbox" id="consent-safety" onchange="updateConsentBtn()">
-                    <span><span id="consent-safety-label">안전 정책</span>을 확인했습니다 <button class="consent-view-btn" onclick="openAboutPage('safety')" id="consent-safety-view">보기</button></span>
+                    <span><span id="consent-safety-label">안전 정책</span><span id="consent-safety-suffix">을 확인했습니다</span> <button class="consent-view-btn" onclick="openAboutPage('safety')" id="consent-safety-view">보기</button></span>
                 </label>
             </div>
             <button id="consent-confirm-btn" onclick="confirmConsent()" disabled style="width:100%; padding:14px; border-radius:12px; background:rgba(0,229,255,0.15); color:rgba(255,255,255,0.3); border:1px solid rgba(0,229,255,0.2); font-size:15px; font-weight:600; cursor:not-allowed; transition:all 0.2s;" id="consent-confirm-label">동의하고 시작하기</button>
@@ -1387,11 +1387,11 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         <div class="modal-content" style="max-width:320px;">
             <h3 style="margin-bottom:18px; font-size:18px; letter-spacing:2px;">BOUNDLESS TALK</h3>
             <div style="display:flex; flex-direction:column; gap:4px;">
-                <button onclick="openAboutPage('privacy')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">🔒 Privacy Policy</button>
-                <button onclick="openAboutPage('terms')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">📄 Terms of Service</button>
-                <button onclick="openAboutPage('guidelines')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">📋 Community Guidelines</button>
-                <button onclick="openAboutPage('safety')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">🛡️ Safety</button>
-                <button onclick="document.getElementById('about-modal').classList.remove('active'); openInquiryModal();" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">✉️ Contact</button>
+                <button onclick="openAboutPage('privacy')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'" id="about-btn-privacy">🔒 <span id="about-label-privacy">개인정보처리방침</span></button>
+                <button onclick="openAboutPage('terms')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'" id="about-btn-terms">📄 <span id="about-label-terms">이용약관</span></button>
+                <button onclick="openAboutPage('guidelines')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'" id="about-btn-guidelines">📋 <span id="about-label-guidelines">커뮤니티 가이드라인</span></button>
+                <button onclick="openAboutPage('safety')" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'" id="about-btn-safety">🛡️ <span id="about-label-safety">안전 정책</span></button>
+                <button onclick="document.getElementById('about-modal').classList.remove('active'); openInquiryModal();" style="background:rgba(255,255,255,0.04); border:none; color:rgba(255,255,255,0.8); font-size:14px; padding:14px 16px; border-radius:10px; text-align:left; cursor:pointer; width:100%;" onmouseover="this.style.background='rgba(0,229,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'" id="about-btn-contact">✉️ <span id="about-label-contact">문의하기</span></button>
             </div>
             <button onclick="document.getElementById('about-modal').classList.remove('active')" style="margin-top:16px; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.4); border:none; border-radius:10px; padding:10px; width:100%; cursor:pointer; font-size:13px;">닫기</button>
         </div>
@@ -1964,6 +1964,18 @@ database.ref('activeTopics').on('value', (snap) => {
         ['consent-terms-view','consent-privacy-view','consent-guidelines-view','consent-safety-view'].forEach(id => {
             const el = document.getElementById(id); if(el) el.textContent = isKo ? '보기' : 'View';
         });
+        const suffixAgree = isKo ? '에 동의합니다' : '';
+        const suffixConfirm = isKo ? '을 확인했습니다' : '';
+        ['consent-terms-suffix','consent-privacy-suffix','consent-guidelines-suffix'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.textContent = suffixAgree;
+        });
+        const css = document.getElementById('consent-safety-suffix'); if(css) css.textContent = suffixConfirm;
+        const alPrivacy = document.getElementById('about-label-privacy'); if(alPrivacy) alPrivacy.textContent = isKo ? '개인정보처리방침' : 'Privacy Policy';
+        const alTerms = document.getElementById('about-label-terms'); if(alTerms) alTerms.textContent = isKo ? '이용약관' : 'Terms of Service';
+        const alGuide = document.getElementById('about-label-guidelines'); if(alGuide) alGuide.textContent = isKo ? '커뮤니티 가이드라인' : 'Community Guidelines';
+        const alSafety = document.getElementById('about-label-safety'); if(alSafety) alSafety.textContent = isKo ? '안전 정책' : 'Safety';
+        const alContact = document.getElementById('about-label-contact'); if(alContact) alContact.textContent = isKo ? '문의하기' : 'Contact';
+        const aboutClose = document.querySelector('#about-modal button:last-child'); if(aboutClose) aboutClose.textContent = isKo ? '닫기' : 'Close';
         if (inqDesc) inqDesc.innerHTML = currentLang === 'ko' ? '불편한 점이나 건의 사항을 보내주세요.<br>이메일로 답변해드립니다.' : 'Send us your feedback or questions.<br>We\'ll reply via email.';
         if (inqText) inqText.placeholder = currentLang === 'ko' ? '문의 내용을 입력해주세요...' : 'Enter your message...';
         if (inqSubmit) inqSubmit.textContent = currentLang === 'ko' ? '보내기' : 'Send';
@@ -2112,6 +2124,19 @@ database.ref('activeTopics').on('value', (snap) => {
             .every(id => document.getElementById(id).checked);
         const btn = document.getElementById('consent-confirm-btn');
         btn.disabled = !allChecked;
+        if (allChecked) {
+            btn.style.background = 'linear-gradient(135deg, rgba(0,229,255,0.35), rgba(0,180,255,0.25))';
+            btn.style.color = '#00e5ff';
+            btn.style.borderColor = 'rgba(0,229,255,0.6)';
+            btn.style.cursor = 'pointer';
+            btn.style.boxShadow = '0 0 16px rgba(0,229,255,0.2)';
+        } else {
+            btn.style.background = 'rgba(0,229,255,0.08)';
+            btn.style.color = 'rgba(255,255,255,0.3)';
+            btn.style.borderColor = 'rgba(0,229,255,0.15)';
+            btn.style.cursor = 'not-allowed';
+            btn.style.boxShadow = 'none';
+        }
     }
 
     function confirmConsent() {
