@@ -165,6 +165,39 @@ app.post('/summarize', (req, res) => {
     req.pipe(bb);
 });
 
+app.post('/getTopic', async (req, res) => {
+    if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: 'GEMINI_API_KEY not set' });
+    }
+
+    const { topic } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic required' });
+
+    try {
+        const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: `You are a topic normalizer. Convert the given topic word into a single canonical English keyword so that semantically similar topics (e.g. "사랑", "love", "연애", "romance") all map to the same word. Rules: 1) Output only one lowercase English word or short phrase (no spaces, use underscore if needed). 2) Merge synonyms and translations into one word. 3) Use the most common English term. Input: "${topic.trim()}" Output:` }]
+                    }],
+                    generationConfig: { maxOutputTokens: 20, temperature: 0 }
+                })
+            }
+        );
+
+        const data = await geminiRes.json();
+        let normalized = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toLowerCase() || topic.trim().toLowerCase();
+        normalized = normalized.replace(/[^a-z0-9_]/g, '').slice(0, 64) || 'general';
+        res.json({ topic: normalized });
+    } catch (err) {
+        console.error('getTopic error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 const PORT = process.env.PORT || 3000;

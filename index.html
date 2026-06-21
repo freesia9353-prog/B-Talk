@@ -2318,14 +2318,14 @@ database.ref('activeTopics').on('value', (snap) => {
         statusEl.innerText = lang.matchingLoading;
 
         try {
-            const response = await fetch("/.netlify/functions/getTopic", {
+            const response = await fetch("https://b-talk-0gi0.onrender.com/getTopic", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userInput: userInput, uid: auth.currentUser ? auth.currentUser.uid : "anon" })
+                body: JSON.stringify({ topic: userInput })
             });
             if (!response.ok) throw new Error("Backend response error");
             const data = await response.json();
-            let topic = data.topic ? data.topic.trim().toLowerCase() : "general"; // 소문자 정규화로 대소문자 무관 매칭
+            let topic = data.topic ? data.topic.trim().toLowerCase() : "general";
             if(!topic) topic = "general";
             statusEl.innerText = lang.matchingDone(topic);
             return topic;
