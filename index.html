@@ -2098,10 +2098,14 @@ database.ref('activeTopics').on('value', (snap) => {
 
     document.getElementById('lang-toggle-btn').addEventListener('click', () => {
         currentLang = (currentLang === "en") ? "ko" : "en";
-        // 언어 전환 시 동물 레이블만 재생성 (동물 종류는 유지)
-        const cachedUids = Object.keys(uidToAnimal);
-        uidToAnimal = {};
-        cachedUids.forEach(uid => assignAnimal(uid));
+        // 언어 전환 시 동물 레이블만 업데이트 (uid 캐시 유지)
+        Object.keys(uidToAnimal).forEach(uid => {
+            const hash = hashUid(String(uid));
+            const animal = ANIMALS[hash % ANIMALS.length];
+            const colorList = COLORS[currentLang] || COLORS.ko;
+            const color = colorList[(hash >>> 4) % colorList.length];
+            uidToAnimal[uid].label = `${color} ${currentLang === 'en' ? animal.en : animal.ko}`;
+        });
         updateRoomParticipants();
         // 언어 토글 버튼 텍스트 업데이트
         document.getElementById('lang-toggle-btn').innerText = currentLang === 'ko' ? 'EN' : 'KO';
