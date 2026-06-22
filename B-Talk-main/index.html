@@ -1738,7 +1738,7 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
 database.ref('activeTopics').on('value', (snap) => {
     const data = snap.val() || {};
     const topics = [];
-    const STALE_MS = 30 * 60 * 1000; // 30분 이상 된 항목은 유령 방으로 간주
+    const STALE_MS = 5 * 60 * 1000; // 5분 이상 업데이트 없으면 유령 방으로 간주
     const now = Date.now();
 
     Object.entries(data).forEach(([channelId, channelUsers]) => {
@@ -2728,8 +2728,15 @@ setTimeout(() => toast.remove(), 10000);
                 // 퇴장 시 자동 삭제
                 database.ref(`channels/${safeAgoraChannelId}/members/${myUid}`).onDisconnect().remove();
                 if (finalTopic && !finalTopic.startsWith('🔒_')) {
-    database.ref('activeTopics/' + safeAgoraChannelId + '/' + auth.currentUser.uid).set({ topic: finalTopic, style: selectedSpeechStyle, ts: firebase.database.ServerValue.TIMESTAMP });
-database.ref('activeTopics/' + safeAgoraChannelId + '/' + auth.currentUser.uid).onDisconnect().remove();
+    const myTopicRef = database.ref('activeTopics/' + safeAgoraChannelId + '/' + auth.currentUser.uid);
+    myTopicRef.set({ topic: finalTopic, style: selectedSpeechStyle, ts: firebase.database.ServerValue.TIMESTAMP });
+    myTopicRef.onDisconnect().remove();
+    // 2분마다 ts 갱신 (비정상 종료 감지용 — 5분 stale 기준보다 짧게)
+    if (window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+    window._heartbeatInterval = setInterval(() => {
+        if (!isJoined) { clearInterval(window._heartbeatInterval); return; }
+        myTopicRef.update({ ts: firebase.database.ServerValue.TIMESTAMP });
+    }, 2 * 60 * 1000);
 // 채널 참여자 스타일 리스닝
 database.ref('activeTopics/' + safeAgoraChannelId).on('value', snap => {
     const data = snap.val() || {};
@@ -3407,6 +3414,7 @@ return text;
     document.getElementById('leave-btn').onclick = async function() {
         try {
             stopRollingAudioRecorder();
+            if (window._heartbeatInterval) { clearInterval(window._heartbeatInterval); window._heartbeatInterval = null; }
             if (signalTimer) { clearInterval(signalTimer); signalTimer = null; }
             if (signalListenerRef) { signalListenerRef.off(); signalListenerRef = null; }
             if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); localAudioTrack = null; }
