@@ -1130,8 +1130,13 @@
     }
 
     async function resolveReport(id) {
-        await db.ref(`reports/${id}`).update({ resolved: true });
-        await loadReports();
+        try {
+            await db.ref(`reports/${id}`).update({ resolved: true });
+            await loadReports();
+        } catch(e) {
+            console.error('resolveReport error:', e);
+            alert('처리 실패: ' + e.message);
+        }
     }
 
     function playReportAudio(url) {
