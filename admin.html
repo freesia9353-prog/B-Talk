@@ -1156,7 +1156,15 @@
             } else if (type === 'ban') {
                 await userRef.update({ banned: true, bannedAt: now, banReason: '관리자 수동 영구정지' });
             } else if (type === 'clear') {
-                await userRef.update({ warnedAt: null, suspendedUntil: null, suspendReason: null });
+                // 무혐의: reportCount 차감 + 신고 내역 삭제
+                const snap = await userRef.once('value');
+                const userData = snap.val() || {};
+                const newCount = Math.max((userData.reportCount || 1) - 1, 0);
+                await userRef.update({ reportCount: newCount, warnedAt: null, suspendedUntil: null, suspendReason: null });
+                await db.ref('reports/' + reportId).remove();
+                await loadAll();
+                alert('무혐의 처리 완료! 신고 내역이 삭제되었습니다.');
+                return;
             }
             await db.ref('reports/' + reportId).update({ resolved: true, adminAction: type, actionAt: now });
             await loadAll();
