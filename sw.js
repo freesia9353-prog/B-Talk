@@ -16,9 +16,17 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  // index.html은 항상 네트워크에서 최신 버전 가져옴
-  if (url.pathname === '/B-Talk/' || url.pathname === '/B-Talk/index.html') {
-    e.respondWith(fetch(e.request));
+  // 외부 도메인, Firebase, admin 페이지는 항상 네트워크에서
+  if (
+    url.origin !== self.location.origin ||
+    url.pathname === '/B-Talk/' ||
+    url.pathname === '/B-Talk/index.html' ||
+    url.pathname === '/B-Talk/admin.html' ||
+    url.hostname.includes('firebase') ||
+    url.hostname.includes('googleapis') ||
+    url.hostname.includes('netlify')
+  ) {
+    e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
     return;
   }
   // 정적 자산은 캐시 우선
