@@ -77,10 +77,12 @@ exports.handler = async function(event, context) {
                     const base64Audio = finalAudioBuffer.toString('base64');
                     const response = await ai.models.generateContent({
                         model: 'gemini-2.5-flash',
-                        contents: [
-                            { text: prompt },
-                            { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
-                        ],
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: 'audio/webm', data: base64Audio } }
+                            ]
+                        }],
                         config: { responseMimeType: "application/json" }
                     });
 
