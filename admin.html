@@ -1159,7 +1159,7 @@
                 await userRef.update({ warnedAt: null, suspendedUntil: null, suspendReason: null });
             }
             await db.ref('reports/' + reportId).update({ resolved: true, adminAction: type, actionAt: now });
-            await loadReports();
+            await loadAll();
             alert(`${labels[type]} 완료!`);
         } catch(e) {
             console.error('sanctionReport error:', e);
