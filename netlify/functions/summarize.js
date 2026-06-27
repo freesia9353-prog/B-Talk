@@ -53,15 +53,12 @@ exports.handler = async (event, context) => {
         // 3. Gemini 1.5 Flash에 오디오 버퍼를 Base64 인라인 데이터로 전송 (STT + 요약 동시 처리)
         const response = await ai.models.generateContent({
           model: 'gemini-1.5-flash',
-          contents: [
-            prompt,
-            {
-              inlineData: {
-                data: audioBuffer.toString('base64'),
-                mimeType: mimeType
-              }
-            }
-          ]
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inlineData: { data: audioBuffer.toString('base64'), mimeType: mimeType } }
+            ]
+          }]
         });
 
         // 4. 결과 반환
