@@ -1426,6 +1426,63 @@ select { background: #0d0e12; color: rgba(255,255,255,0.5); border: 1px solid rg
         </div>
     </div>
 
+    <!-- 6분 경고 배너 -->
+    <div id="free-time-banner" style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9000; background:rgba(20,20,35,0.95); border:1px solid rgba(255,255,255,0.12); border-radius:20px; padding:9px 18px; font-size:12px; color:rgba(255,255,255,0.55); white-space:nowrap;">
+        🕐 <span id="free-time-banner-text">무료 통화가 1분 후 종료됩니다</span>
+    </div>
+
+    <!-- 7분 결제 모달 -->
+    <div id="payment-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
+        <div style="background:#1a1a2e; border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:28px 24px 20px; width:90%; max-width:340px; margin:auto; position:relative; top:50%; transform:translateY(-50%);">
+            <div style="font-size:26px; text-align:center; margin-bottom:10px;">💬</div>
+            <div style="font-size:17px; font-weight:700; color:rgba(255,255,255,0.92); text-align:center; margin-bottom:6px;" id="pay-modal-title">끊기기엔 아까운 대화 아닌가요? 😊</div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:20px;">조금만 더 이어가 보세요</div>
+
+            <!-- 월간 구독 -->
+            <div class="pay-plan-btn" id="pay-monthly" style="border:1.5px solid #00e5ff; background:rgba(0,229,255,0.06); border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div style="font-size:10px; background:rgba(0,229,255,0.15); color:#00e5ff; border-radius:6px; padding:2px 7px; display:inline-block; margin-bottom:4px;">인기</div>
+                    <div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.9);">월간 구독</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px;">한 달 동안 무제한 통화</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:16px; font-weight:700; color:#00e5ff;">4,900원</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.35);">/ 월</div>
+                </div>
+            </div>
+
+            <!-- 주간 구독 -->
+            <div class="pay-plan-btn" id="pay-weekly" style="border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px 16px; margin-bottom:10px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.88);">주간 구독</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px;">7일 동안 무제한 통화</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:16px; font-weight:700; color:rgba(255,255,255,0.9);">1,900원</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.35);">/ 주</div>
+                </div>
+            </div>
+
+            <!-- 분당 과금 -->
+            <div class="pay-plan-btn" id="pay-permin" style="border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:14px 16px; margin-bottom:6px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.88);">분당 과금</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px;">부담되면 딱 오늘만 써봐도 돼요</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:16px; font-weight:700; color:rgba(255,255,255,0.9);">50원</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.35);">/ 분</div>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid rgba(255,255,255,0.07); margin:6px 0 8px;">
+            <button id="pay-modal-leave" style="width:100%; padding:11px; background:transparent; border:none; color:rgba(255,255,255,0.3); font-size:12px; cursor:pointer; border-radius:10px;">대화 종료하기</button>
+            <div style="font-size:11px; color:rgba(255,255,255,0.2); text-align:center; margin-top:6px;">
+                <span id="pay-countdown">60</span>초 후 자동으로 대화가 종료됩니다
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="report-modal">
         <div class="modal-content">
             <h3 style="color: var(--danger-color);" id="rep-m-title">🚨 Report Toxic User</h3>
@@ -2720,6 +2777,7 @@ document.getElementById('max-people-group').style.visibility = "hidden";
             myUid = await client.join(AGORA_APP_ID, safeAgoraChannelId, agoraToken, 0);
             dbg('9. join 성공');
             isJoined = true;
+            startFreeTimer();
             // 대화 시작 → 대기자 목록에서 제거
             if (firebaseUser) database.ref('waiting/' + firebaseUser.uid).remove();
             document.getElementById('waiting-count-bar').style.display = 'none';
@@ -3431,8 +3489,77 @@ return text;
     }
 
     // 10. 통화방 퇴장 및 멀티 피어 평판 배지 기프트 모달 제어 시스템
+    // 7분 무료 타이머
+    let freeTimerInterval = null;
+    let payCountdownInterval = null;
+
+    function startFreeTimer() {
+        clearFreeTimer();
+        let elapsed = 0;
+        const banner = document.getElementById('free-time-banner');
+
+        freeTimerInterval = setInterval(() => {
+            elapsed++;
+            if (elapsed === 360) {
+                // 6분 — 배너 표시
+                banner.style.display = 'block';
+                document.getElementById('free-time-banner-text').innerText =
+                    currentLang === 'ko' ? '무료 통화가 1분 후 종료됩니다' : 'Free call ends in 1 minute';
+            }
+            if (elapsed === 420) {
+                // 7분 — 모달 표시
+                clearInterval(freeTimerInterval);
+                banner.style.display = 'none';
+                showPaymentModal();
+            }
+        }, 1000);
+    }
+
+    function clearFreeTimer() {
+        if (freeTimerInterval) { clearInterval(freeTimerInterval); freeTimerInterval = null; }
+        clearPayCountdown();
+        document.getElementById('free-time-banner').style.display = 'none';
+        document.getElementById('payment-modal').style.display = 'none';
+    }
+
+    function showPaymentModal() {
+        const modal = document.getElementById('payment-modal');
+        modal.style.display = 'flex';
+        let sec = 60;
+        document.getElementById('pay-countdown').innerText = sec;
+        payCountdownInterval = setInterval(() => {
+            sec--;
+            document.getElementById('pay-countdown').innerText = sec;
+            if (sec <= 0) {
+                clearPayCountdown();
+                modal.style.display = 'none';
+                document.getElementById('leave-btn').click();
+            }
+        }, 1000);
+    }
+
+    function clearPayCountdown() {
+        if (payCountdownInterval) { clearInterval(payCountdownInterval); payCountdownInterval = null; }
+    }
+
+    // 플랜 버튼 — 포트원 연동 전 임시 알림
+    ['pay-monthly', 'pay-weekly', 'pay-permin'].forEach(id => {
+        document.getElementById(id).onclick = () => {
+            alert(currentLang === 'ko'
+                ? '결제 기능은 곧 오픈됩니다! 조금만 기다려 주세요 😊'
+                : 'Payment coming soon! Stay tuned 😊');
+        };
+    });
+
+    document.getElementById('pay-modal-leave').onclick = () => {
+        document.getElementById('payment-modal').style.display = 'none';
+        clearPayCountdown();
+        document.getElementById('leave-btn').click();
+    };
+
     document.getElementById('leave-btn').onclick = async function() {
         try {
+            clearFreeTimer();
             stopRollingAudioRecorder();
             if (window._heartbeatInterval) { clearInterval(window._heartbeatInterval); window._heartbeatInterval = null; }
             if (signalTimer) { clearInterval(signalTimer); signalTimer = null; }
