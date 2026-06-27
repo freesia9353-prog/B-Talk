@@ -3477,7 +3477,7 @@ return text;
 
         try {
             // Netlify 백엔드 서버리스 AI 검사 엔드포인트 호출 연동
-            const response = await fetch("/.netlify/functions/reportUser", {
+            const response = await fetch("https://b-talk.netlify.app/.netlify/functions/reportUser", {
                 method: "POST",
                 body: formData
             });
@@ -3653,7 +3653,7 @@ return text;
             formData.append('audioData', fullBlob);
             formData.append('lang', currentLang);
 
-            const res = await fetch('/.netlify/functions/summarize', {
+            const res = await fetch('https://b-talk.netlify.app/.netlify/functions/summarize', {
                 method: 'POST',
                 body: formData
             });
